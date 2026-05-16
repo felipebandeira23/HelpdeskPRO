@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wsl -d Ubuntu -- pwd)",
+      "Bash(cd \"/mnt/c/Users/felip/OneDrive/Documentos/HelpDesk Pro\" && ls -la 2>&1 | head -30)",
+      "Bash(cp \"C:\\\\Users\\\\felip\\\\Downloads\\\\Nova pasta\\\\files\\\\PLANO.md\" \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Documentos\\\\HelpDesk Pro\\\\\" && cp \"C:\\\\Users\\\\felip\\\\Downloads\\\\Nova pasta\\\\files\\\\ARCHITECTURE.md\" \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Documentos\\\\HelpDesk Pro\\\\\")",
+      "Bash(cp \"C:\\\\Users\\\\felip\\\\Downloads\\\\Nova pasta\\\\files\\\\ROADMAP.md\" \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Documentos\\\\HelpDesk Pro\\\\\" && cp \"C:\\\\Users\\\\felip\\\\Downloads\\\\Nova pasta\\\\files\\\\.gitignore\" \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Documentos\\\\HelpDesk Pro\\\\\")",
+      "Bash(wsl -d Ubuntu -- node --version)",
+      "Bash(wsl -d Ubuntu -- npm --version)"
+    ]
+  }
+}
