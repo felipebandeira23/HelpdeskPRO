@@ -25,7 +25,7 @@ export function CreateTicketModal({ onClose, onSuccess }: CreateTicketModalProps
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/tickets`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/tickets`,
         {
           method: 'POST',
           headers: {

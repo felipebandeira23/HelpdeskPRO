@@ -42,7 +42,7 @@ export default function TicketDetailPage() {
   const loadTicket = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/tickets/${ticketId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${ticketId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,

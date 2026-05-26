@@ -35,7 +35,15 @@
       "mcp__Claude_in_Chrome__find",
       "Bash(curl -v -X OPTIONS http://localhost:3001/auth/login -H 'Origin: http://localhost:3000' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: Content-Type')",
       "Bash(curl -s -X POST http://localhost:3001/auth/login -H 'Content-Type: application/json' -H 'Origin: http://localhost:3000' -d '{\"email\":\"admin@helpdeskpro.local\",\"password\":\"admin123\"}')",
-      "Bash(pkill -f \"node\\\\|npm\")"
+      "Bash(pkill -f \"node\\\\|npm\")",
+      "Bash(git commit -m ' *)",
+      "Bash(curl -s -X GET http://localhost:3001/api/tickets -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXBtMnVpNHAwMDAwMXNpZDU0ZXJtZjVqIiwiZW1haWwiOiJhZG1pbkBoZWxwZGVza3Byby5sb2NhbCIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3OTc2NzMyNSwiZXhwIjoxNzgwMzcxOTEzfQ.pQ8oHLuo6SJdJoz90sjgr6qazRLtKAnmCPGmpXlSa8A')",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 17260 /F)",
+      "Bash(taskkill /PID 28556 /F)",
+      "PowerShell(Stop-Process -Id 17260 -Force)",
+      "PowerShell(Stop-Process -Id 28556 -Force)"
     ]
   }
 }

@@ -34,7 +34,7 @@ export default function TicketsPage() {
       if (status) params.append('status', status);
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/tickets?${params}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/tickets?${params}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
