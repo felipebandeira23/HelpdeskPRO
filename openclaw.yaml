@@ -1,0 +1,41 @@
+# Configuração básica do OpenClaw para monorepo Turbo/Next.js/NestJS
+
+project:
+  name: HelpDesk Pro
+  description: Projeto monorepo Turbo com Next.js (web) e NestJS (api)
+  root: .
+
+workspaces:
+  - path: apps/web
+    type: nextjs
+    name: Web
+  - path: apps/api
+    type: nestjs
+    name: API
+  - path: packages/shared
+    type: typescript
+    name: Shared
+
+# Ajuste os comandos conforme necessário para build, dev e test
+commands:
+  build: turbo run build
+  dev: turbo run dev
+  test: turbo run test
+
+docker:
+  compose: docker-compose.yml
+
+automations:
+  # Sugestões automáticas de código e revisão de PR
+  suggest:
+    enabled: true
+    on:
+      - pr
+      - push
+  # Integração com GitHub para comentários e sugestões
+  github:
+    enabled: true
+    repo: felipebandeira23/HelpdeskPRO
+    pr_comments: true
+    pr_reviews: true
+    issues: true

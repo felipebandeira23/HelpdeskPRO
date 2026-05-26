@@ -6,7 +6,15 @@
       "Bash(cp \"C:\\\\Users\\\\felip\\\\Downloads\\\\Nova pasta\\\\files\\\\PLANO.md\" \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Documentos\\\\HelpDesk Pro\\\\\" && cp \"C:\\\\Users\\\\felip\\\\Downloads\\\\Nova pasta\\\\files\\\\ARCHITECTURE.md\" \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Documentos\\\\HelpDesk Pro\\\\\")",
       "Bash(cp \"C:\\\\Users\\\\felip\\\\Downloads\\\\Nova pasta\\\\files\\\\ROADMAP.md\" \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Documentos\\\\HelpDesk Pro\\\\\" && cp \"C:\\\\Users\\\\felip\\\\Downloads\\\\Nova pasta\\\\files\\\\.gitignore\" \"C:\\\\Users\\\\felip\\\\OneDrive\\\\Documentos\\\\HelpDesk Pro\\\\\")",
       "Bash(wsl -d Ubuntu -- node --version)",
-      "Bash(wsl -d Ubuntu -- npm --version)"
+      "Bash(wsl -d Ubuntu -- npm --version)",
+      "Bash(npm install *)",
+      "Bash(npx prisma *)",
+      "Bash(docker-compose up *)",
+      "Bash(npm run *)",
+      "Bash(npx tsx *)",
+      "Bash(npm rebuild *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'feat: Sprint 0.2 - Modelar schema Prisma e seed inicial *)"
     ]
   }
 }
