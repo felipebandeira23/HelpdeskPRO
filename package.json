@@ -25,6 +25,7 @@
     "eslint-config-prettier": "^9.1.0",
     "typescript": "^5.4.5"
   },
+  "packageManager": "npm@10.0.0",
   "engines": {
     "node": ">=20.0.0",
     "npm": ">=10.0.0"

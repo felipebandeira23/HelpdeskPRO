@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import '../styles/theme.css';
 import { TopBar } from '@/components/TopBar';
+import { AuthProvider } from '@/lib/auth-context';
 
 export const metadata: Metadata = {
   title: 'HelpdeskPRO',
@@ -16,8 +17,10 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="antialiased bg-slate-950 text-slate-100">
-        <TopBar />
-        {children}
+        <AuthProvider>
+          <TopBar />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
