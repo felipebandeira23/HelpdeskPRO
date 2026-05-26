@@ -43,7 +43,8 @@
       "Bash(taskkill /PID 17260 /F)",
       "Bash(taskkill /PID 28556 /F)",
       "PowerShell(Stop-Process -Id 17260 -Force)",
-      "PowerShell(Stop-Process -Id 28556 -Force)"
+      "PowerShell(Stop-Process -Id 28556 -Force)",
+      "Bash(git commit *)"
     ]
   }
 }
