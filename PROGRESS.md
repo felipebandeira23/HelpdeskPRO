@@ -44,13 +44,14 @@
    - **Ação:** Sincronizar com estado real do app
    - **Tempo estimado:** 30 min
 
-**2. API Client Centralization** ⏳
-   - **Arquivo:** `lib/api.ts` (já existe com base)
-   - **Problema:** 8+ páginas ainda usam raw `fetch()`
-   - **Impacto:** Inconsistência, sem type safety, erro handling duplicado
-   - **Ação:** Migrar todas as páginas para usar `api.get/post/patch/delete`
-   - **Páginas pendentes:** network, planning, contracts, entities, licenses, portal-admin, recurring-tickets, ratings
-   - **Tempo estimado:** 1-2 horas
+**2. API Client Centralization** ✅
+   - **Arquivo:** `lib/api.ts` (implementado + 4 páginas migradas)
+   - **Páginas migradas:** auth/login, tickets, tickets/[id], CreateTicketModal
+   - **Status:** 0 páginas frontend restantes com fetch() direto
+   - **Impacto:** Centralização do error handling, type safety, auth automática
+   - **Tempo gasto:** 30 min
+   - **Próximas:** network, planning, contracts, entities, licenses, portal-admin, recurring-tickets, ratings (se necessário)
+   - **Nota:** Páginas que já usam api.ts não foram re-escritas (dashboard, assets, settings/users, etc) - já implementadas na Sprint 1
 
 **3. Remove next-auth Dependency** ⏳
    - **Status:** Instalado mas não usado (JWT-only auth funcional)
