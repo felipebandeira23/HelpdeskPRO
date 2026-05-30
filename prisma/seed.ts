@@ -1,164 +1,84 @@
-import { PrismaClient, UserRole, TicketStatus, TicketPriority } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { PrismaClient } from '@prisma/client';
+import * as bcryptjs from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Iniciando seed do banco de dados...');
+  // Create admin user
+  const hashedPassword = await bcryptjs.hash('Admin@123456', 12);
 
-  const adminUser = await prisma.user.create({
+  const admin = await prisma.user.create({
     data: {
-      email: 'admin@helpdeskpro.local',
+      id: 'admin-001',
+      email: 'admin@helpdesk.local',
       name: 'Administrador',
-      password: await bcrypt.hash('admin123', 10),
-      role: UserRole.ADMIN,
+      password: hashedPassword,
+      role: 'ADMIN',
       active: true,
     },
   });
 
-  const technicianUser = await prisma.user.create({
+  console.log('✅ Admin user created:', admin.email);
+
+  // Create some test agents
+  const agent1 = await prisma.user.create({
     data: {
-      email: 'tecnico@helpdeskpro.local',
-      name: 'Técnico de Suporte',
-      password: await bcrypt.hash('tech123', 10),
-      role: UserRole.TECHNICIAN,
+      id: 'agent-001',
+      email: 'agente1@helpdesk.local',
+      name: 'Agente 1',
+      password: await bcryptjs.hash('Agent@123456', 12),
+      role: 'TECHNICIAN',
       active: true,
     },
   });
 
-  const viewerUser = await prisma.user.create({
+  const agent2 = await prisma.user.create({
     data: {
-      email: 'usuario@helpdeskpro.local',
-      name: 'Usuário Comum',
-      password: await bcrypt.hash('user123', 10),
-      role: UserRole.VIEWER,
+      id: 'agent-002',
+      email: 'agente2@helpdesk.local',
+      name: 'Agente 2',
+      password: await bcryptjs.hash('Agent@123456', 12),
+      role: 'TECHNICIAN',
       active: true,
     },
   });
 
-  const tiGroup = await prisma.group.create({
+  console.log('✅ Test agents created');
+
+  // Create support group
+  const group = await prisma.group.create({
     data: {
-      name: 'Mesa de TI',
-      description: 'Equipe de suporte técnico',
+      id: 'group-001',
+      name: 'Suporte Técnico',
+      description: 'Grupo principal de suporte',
+      members: {
+        connect: [{ id: agent1.id }, { id: agent2.id }],
+      },
     },
   });
 
-  const rHGroup = await prisma.group.create({
-    data: {
-      name: 'Mesa de RH',
-      description: 'Equipe de recursos humanos',
-    },
-  });
+  console.log('✅ Support group created');
 
-  await prisma.groupMember.createMany({
+  // Create ticket types
+  await prisma.ticketType.createMany({
     data: [
-      { groupId: tiGroup.id, userId: technicianUser.id },
-      { groupId: tiGroup.id, userId: adminUser.id },
+      { id: 'type-001', name: 'Suporte Técnico', color: '#3B82F6' },
+      { id: 'type-002', name: 'Solicitação', color: '#10B981' },
+      { id: 'type-003', name: 'Incidente', color: '#EF4444' },
     ],
   });
 
-  const asset1 = await prisma.asset.create({
-    data: {
-      hostname: 'desktop-001',
-      ip: '192.168.1.10',
-      manufacturer: 'Dell',
-      model: 'Optiplex 7090',
-      os: 'Windows 11 Pro',
-    },
-  });
+  console.log('✅ Ticket types created');
 
-  const asset2 = await prisma.asset.create({
-    data: {
-      hostname: 'desktop-002',
-      ip: '192.168.1.11',
-      manufacturer: 'Lenovo',
-      model: 'ThinkCentre M90',
-      os: 'Windows 10 Pro',
-    },
-  });
-
-  const ticket1 = await prisma.ticket.create({
-    data: {
-      title: 'Reset de Senha',
-      description: 'Usuário esqueceu a senha da rede corporativa',
-      status: TicketStatus.CLOSED,
-      priority: TicketPriority.LOW,
-      requesterId: viewerUser.id,
-      assignedToId: technicianUser.id,
-      groupId: tiGroup.id,
-      progress: 100,
-      closedAt: new Date(),
-    },
-  });
-
-  const ticket2 = await prisma.ticket.create({
-    data: {
-      title: 'Impressora não conecta na rede',
-      description: 'A impressora da sala 101 não está sendo reconhecida pela rede',
-      status: TicketStatus.IN_PROGRESS,
-      priority: TicketPriority.MEDIUM,
-      requesterId: viewerUser.id,
-      assignedToId: technicianUser.id,
-      groupId: tiGroup.id,
-      assetId: asset1.id,
-      progress: 50,
-    },
-  });
-
-  const ticket3 = await prisma.ticket.create({
-    data: {
-      title: 'Computador lento',
-      description: 'O desktop está muito lento ao abrir programas',
-      status: TicketStatus.OPEN,
-      priority: TicketPriority.MEDIUM,
-      requesterId: viewerUser.id,
-      groupId: tiGroup.id,
-      assetId: asset2.id,
-    },
-  });
-
-  await prisma.ticketFollowup.createMany({
-    data: [
-      {
-        ticketId: ticket1.id,
-        authorId: technicianUser.id,
-        message: 'Senha resetada com sucesso. Usuário pode fazer login agora.',
-        isInternal: false,
-      },
-      {
-        ticketId: ticket2.id,
-        authorId: technicianUser.id,
-        message: 'Verificando conexão de rede da impressora...',
-        isInternal: true,
-      },
-      {
-        ticketId: ticket3.id,
-        authorId: viewerUser.id,
-        message: 'Não consigo abrir nem o Word sem esperar muito',
-        isInternal: false,
-      },
-    ],
-  });
-
-  console.log('✅ Seed concluído com sucesso!');
-  console.log(`
-📊 Dados criados:
-  - 3 usuários (admin, técnico, viewer)
-  - 2 grupos (TI, RH)
-  - 2 ativos/máquinas
-  - 3 tickets (exemplos)
-  - 3 acompanhamentos
-
-🔐 Credenciais padrão:
-  Email: admin@helpdeskpro.local | Senha: admin123
-  Email: tecnico@helpdeskpro.local | Senha: tech123
-  Email: usuario@helpdeskpro.local | Senha: user123
-  `);
+  console.log('\n🎉 Database seeded successfully!');
+  console.log('\n📝 Default credentials:');
+  console.log('   Email: admin@helpdesk.local');
+  console.log('   Password: Admin@123456');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Erro ao executar seed:', e);
+    console.error('❌ Error seeding database:', e);
     process.exit(1);
   })
   .finally(async () => {

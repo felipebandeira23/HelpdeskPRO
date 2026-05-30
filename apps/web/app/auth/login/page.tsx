@@ -36,7 +36,8 @@ export default function LoginPage() {
       const data = await response.json();
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      router.push('/dashboard');
+      // Full page navigation so AuthProvider re-reads the token from localStorage
+      window.location.href = '/dashboard';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao fazer login');
     } finally {

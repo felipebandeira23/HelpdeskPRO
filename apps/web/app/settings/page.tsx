@@ -1,0 +1,69 @@
+'use client';
+
+import Link from 'next/link';
+import { PageHeader } from '@/components/ui';
+
+const settingsCards = [
+  {
+    href: '/settings/users',
+    icon: '👥',
+    title: 'Usuários',
+    description: 'Criar, editar e gerenciar operadores e perfis de acesso',
+    color: 'text-purple-500',
+  },
+  {
+    href: '/settings/groups',
+    icon: '👨‍💼',
+    title: 'Grupos / Mesas',
+    description: 'Mesas de trabalho e equipes de suporte',
+    color: 'text-blue-500',
+  },
+  {
+    href: '/settings/categories',
+    icon: '🏷️',
+    title: 'Tipos de Ticket',
+    description: 'Categorias e tipos de chamado com SLA padrão',
+    color: 'text-emerald-500',
+  },
+  {
+    href: '/settings/sla',
+    icon: '⏱️',
+    title: 'SLA',
+    description: 'Configuração de tempos de resposta e solução',
+    color: 'text-amber-500',
+  },
+  {
+    href: '/settings/security',
+    icon: '🔒',
+    title: 'Segurança',
+    description: '2FA, log de auditoria e políticas de acesso',
+    color: 'text-red-500',
+  },
+];
+
+export default function SettingsPage() {
+  return (
+    <div className="p-8">
+      <PageHeader
+        title="Configurações"
+        subtitle="Administração do sistema HelpdeskPRO"
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {settingsCards.map((card) => (
+          <Link
+            key={card.href}
+            href={card.href}
+            className="bg-slate-900 rounded-lg border border-slate-700 p-6 hover:border-slate-500 hover:bg-slate-800/40 transition-all group"
+          >
+            <span className={`text-3xl ${card.color}`}>{card.icon}</span>
+            <h3 className="text-white font-bold mt-3 mb-1 group-hover:text-blue-400">
+              {card.title}
+            </h3>
+            <p className="text-slate-400 text-sm">{card.description}</p>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}

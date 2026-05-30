@@ -22,6 +22,8 @@ import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { TVModeModule } from './modules/tvmode/tvmode.module';
 import { NetworkModule } from './modules/network/network.module';
+import { UsersModule } from './modules/users/users.module';
+import { GroupsModule } from './modules/groups/groups.module';
 import { PrismaService } from './common/prisma/prisma.service';
 
 @Module({
@@ -50,6 +52,8 @@ import { PrismaService } from './common/prisma/prisma.service';
     BillingModule,
     TVModeModule,
     NetworkModule,
+    UsersModule,
+    GroupsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
