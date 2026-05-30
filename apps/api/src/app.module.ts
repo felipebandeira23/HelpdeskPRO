@@ -11,6 +11,12 @@ import { TicketTypesModule } from './modules/ticket-types/ticket-types.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AutomationModule } from './modules/automation/automation.module';
 import { AssetsModule } from './modules/assets/assets.module';
+import { PortalModule } from './modules/portal/portal.module';
+import { ChatModule } from './modules/chat/chat.module';
+import { RatingsModule } from './modules/ratings/ratings.module';
+import { VaultModule } from './modules/vault/vault.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PrismaService } from './common/prisma/prisma.service';
 
 @Module({
@@ -28,6 +34,12 @@ import { PrismaService } from './common/prisma/prisma.service';
     DashboardModule,
     AutomationModule,
     AssetsModule,
+    PortalModule,
+    ChatModule,
+    RatingsModule,
+    VaultModule,
+    ReportsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

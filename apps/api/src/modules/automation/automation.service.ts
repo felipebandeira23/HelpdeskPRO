@@ -8,6 +8,7 @@ export class AutomationService {
   async createRule(data: {
     name: string;
     description?: string;
+    trigger: string;
     conditions: any;
     actions: any;
     enabled?: boolean;
@@ -16,6 +17,7 @@ export class AutomationService {
       data: {
         name: data.name,
         description: data.description,
+        trigger: data.trigger,
         conditions: data.conditions,
         actions: data.actions,
         enabled: data.enabled ?? true,

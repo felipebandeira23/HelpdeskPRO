@@ -6,13 +6,10 @@ import {
   Delete,
   Param,
   Body,
-  UseGuards,
 } from '@nestjs/common';
-import { JwtGuard } from '../../common/guards/jwt.guard';
 import { TicketTypesService } from './ticket-types.service';
 
 @Controller('api/ticket-types')
-@UseGuards(JwtGuard)
 export class TicketTypesController {
   constructor(private service: TicketTypesService) {}
 

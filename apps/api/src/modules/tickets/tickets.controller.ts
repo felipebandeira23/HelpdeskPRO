@@ -44,4 +44,18 @@ export class TicketsController {
   async delete(@Param('id') id: string) {
     return this.ticketsService.delete(id);
   }
+
+  @Post(':id/followups')
+  async addFollowup(
+    @Param('id') ticketId: string,
+    @Body() body: { message: string; isInternal?: boolean },
+    @Request() req: any,
+  ) {
+    return this.ticketsService.addFollowup(
+      ticketId,
+      req.user.id,
+      body.message,
+      body.isInternal || false,
+    );
+  }
 }

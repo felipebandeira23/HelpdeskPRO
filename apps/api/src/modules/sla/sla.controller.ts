@@ -1,9 +1,7 @@
-import { Controller, Get, Param, Post, Body, UseGuards } from '@nestjs/common';
-import { JwtGuard } from '../../common/guards/jwt.guard';
+import { Controller, Get, Param, Post, Body } from '@nestjs/common';
 import { SLAService } from './sla.service';
 
 @Controller('api/slas')
-@UseGuards(JwtGuard)
 export class SLAController {
   constructor(private slaService: SLAService) {}
 

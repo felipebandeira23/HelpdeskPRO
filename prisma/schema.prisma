@@ -188,6 +188,8 @@ model TicketType {
   checklistTemplateId String?
   checklistTemplate   ChecklistTemplate? @relation(fields: [checklistTemplateId], references: [id])
 
+  templates TicketTemplate[] @relation("TicketTypeTemplates")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -24,7 +24,7 @@ interface TicketDetail {
     id: string;
     message: string;
     isInternal: boolean;
-    author: { name: string };
+    author: { id: string; name: string };
     createdAt: string;
   }>;
 }
@@ -58,15 +58,12 @@ export default function TicketDetailPage() {
 
       const data = await response.json();
       setTicket(data);
-      setStatusValue(data.status);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar ticket');
     } finally {
       setLoading(false);
     }
   };
-
-
 
   const handleTimelineAddFollowup = async (message: string, isInternal: boolean) => {
     try {

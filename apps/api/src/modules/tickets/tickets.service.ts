@@ -124,6 +124,25 @@ export class TicketsService {
     return { message: 'Ticket deletado com sucesso' };
   }
 
+  async addFollowup(
+    ticketId: string,
+    authorId: string,
+    message: string,
+    isInternal: boolean = false,
+  ) {
+    await this.findById(ticketId);
+
+    return this.prisma.ticketFollowup.create({
+      data: {
+        ticketId,
+        authorId,
+        message,
+        isInternal,
+      },
+      include: { author: true },
+    });
+  }
+
   private isValidStatusTransition(
     currentStatus: string,
     newStatus: string,
