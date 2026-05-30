@@ -40,6 +40,17 @@ enum AgentStatus {
   UNKNOWN
 }
 
+enum SLAStatus {
+  OK
+  WARNING
+  BREACHED
+}
+
+enum ChecklistItemStatus {
+  PENDING
+  COMPLETED
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -109,6 +120,8 @@ model Ticket {
   asset   Asset?  @relation(fields: [assetId], references: [id], onDelete: SetNull)
 
   followups TicketFollowup[]
+  sla       SLA?
+  checklist Checklist?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -160,6 +173,129 @@ model Asset {
 
   @@index([agentStatus])
   @@map("assets")
+}
+
+model TicketType {
+  id    String @id @default(cuid())
+  name  String @unique
+  icon  String?
+  color String @default("#2B73C9")
+  description String?
+
+  slaResponseTime    Int?
+  slaSolutionTime    Int?
+
+  checklistTemplateId String?
+  checklistTemplate   ChecklistTemplate? @relation(fields: [checklistTemplateId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("ticket_types")
+}
+
+model TicketTemplate {
+  id    String @id @default(cuid())
+  name  String
+  description String?
+
+  typeId  String?
+  type    TicketType?  @relation("TicketTypeTemplates", fields: [typeId], references: [id], onDelete: SetNull)
+
+  defaultPriority TicketPriority @default(MEDIUM)
+  defaultTitle    String?
+  defaultDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([typeId])
+  @@map("ticket_templates")
+}
+
+model SLA {
+  id        String @id @default(cuid())
+  ticketId  String @unique
+  ticket    Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  responseTime    DateTime?
+  responseStatus  SLAStatus @default(OK)
+
+  solutionTime    DateTime?
+  solutionStatus  SLAStatus @default(OK)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ticketId])
+  @@index([responseStatus])
+  @@index([solutionStatus])
+  @@map("slas")
+}
+
+model ChecklistTemplate {
+  id          String @id @default(cuid())
+  name        String
+  description String?
+
+  items ChecklistTemplateItem[]
+
+  ticketTypes TicketType[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("checklist_templates")
+}
+
+model ChecklistTemplateItem {
+  id          String @id @default(cuid())
+  templateId  String
+  template    ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  order       Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([templateId])
+  @@map("checklist_template_items")
+}
+
+model Checklist {
+  id        String @id @default(cuid())
+  ticketId  String
+  ticket    Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  items ChecklistItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([ticketId])
+  @@map("checklists")
+}
+
+model ChecklistItem {
+  id          String @id @default(cuid())
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  status      ChecklistItemStatus @default(PENDING)
+  order       Int @default(0)
+
+  completedAt DateTime?
+  completedBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([checklistId])
+  @@index([status])
+  @@map("checklist_items")
 }
 
 model AuditLog {
