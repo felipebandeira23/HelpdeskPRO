@@ -22,7 +22,9 @@ const sections: MenuSection[] = [
     items: [
       { icon: '📊', label: 'Dashboard', href: '/dashboard', color: 'text-blue-500' },
       { icon: '🎫', label: 'Tickets', href: '/tickets', color: 'text-emerald-500' },
-      { icon: '📅', label: 'Tarefas', href: '/tasks', color: 'text-cyan-500' },
+      { icon: '✅', label: 'Tarefas', href: '/tasks', color: 'text-cyan-400' },
+      { icon: '🔄', label: 'Recorrentes', href: '/recurring-tickets', color: 'text-teal-400' },
+      { icon: '📅', label: 'Planejamento', href: '/planning', color: 'text-cyan-500' },
       { icon: '💬', label: 'Chat', href: '/chat', color: 'text-green-500' },
     ],
   },
@@ -30,9 +32,20 @@ const sections: MenuSection[] = [
     title: 'Gestão',
     items: [
       { icon: '💻', label: 'Ativos', href: '/assets', color: 'text-orange-500' },
-      { icon: '🏢', label: 'Clientes', href: '/customers', color: 'text-amber-500' },
+      { icon: '🌐', label: 'Rede', href: '/network', color: 'text-teal-500' },
+      { icon: '🔑', label: 'Licenças (SAM)', href: '/licenses', color: 'text-purple-400' },
+      { icon: '🏢', label: 'Clientes', href: '/customers', color: 'text-amber-400' },
+      { icon: '🏬', label: 'Entidades', href: '/entities', color: 'text-amber-500' },
+      { icon: '📄', label: 'Contratos', href: '/contracts', color: 'text-pink-400' },
+      { icon: '🧾', label: 'Faturamento', href: '/billing', color: 'text-emerald-400' },
+    ],
+  },
+  {
+    title: 'Inteligência',
+    items: [
       { icon: '📈', label: 'Relatórios', href: '/reports', color: 'text-pink-500' },
       { icon: '⚡', label: 'Automação', href: '/automation', color: 'text-yellow-500' },
+      { icon: '⭐', label: 'Avaliações', href: '/ratings', color: 'text-yellow-400' },
     ],
   },
   {
@@ -40,8 +53,7 @@ const sections: MenuSection[] = [
     items: [
       { icon: '🔐', label: 'Cofre de Senhas', href: '/vault', color: 'text-red-500' },
       { icon: '🌐', label: 'Portal', href: '/portal-admin', color: 'text-indigo-500' },
-      { icon: '📺', label: 'Modo TV', href: '/tv-mode', color: 'text-violet-500' },
-      { icon: '🗺️', label: 'Rede', href: '/network', color: 'text-teal-500' },
+      { icon: '📺', label: 'Modo TV', href: '/tvmode', color: 'text-violet-500' },
     ],
   },
   {

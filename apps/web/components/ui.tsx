@@ -1,6 +1,196 @@
 'use client';
 
-import { ReactNode } from 'react';
+import {
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+  forwardRef,
+} from 'react';
+
+/* ------------------------------------------------------------------ *
+ * Form primitives — fonte única de estilo para botões e campos.
+ * Antes do refactor havia 121 <button> e 56 inputs com classes
+ * copiadas à mão. Use estes componentes em telas novas.
+ * ------------------------------------------------------------------ */
+
+type ButtonVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'ghost';
+type ButtonSize = 'sm' | 'md' | 'lg';
+
+const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
+  primary: 'bg-blue-600 hover:bg-blue-700 text-white border-transparent',
+  secondary:
+    'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700',
+  success: 'bg-emerald-600 hover:bg-emerald-700 text-white border-transparent',
+  danger: 'bg-red-600 hover:bg-red-700 text-white border-transparent',
+  ghost:
+    'bg-transparent hover:bg-slate-800 text-slate-300 hover:text-white border-transparent',
+};
+
+const BUTTON_SIZES: Record<ButtonSize, string> = {
+  sm: 'px-3 py-1.5 text-xs',
+  md: 'px-4 py-2 text-sm',
+  lg: 'px-5 py-2.5 text-base',
+};
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  loading?: boolean;
+  icon?: ReactNode;
+  fullWidth?: boolean;
+}
+
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      variant = 'primary',
+      size = 'md',
+      loading = false,
+      icon,
+      fullWidth = false,
+      disabled,
+      className = '',
+      children,
+      ...props
+    },
+    ref,
+  ) => (
+    <button
+      ref={ref}
+      disabled={disabled || loading}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg border font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500/40 ${
+        BUTTON_VARIANTS[variant]
+      } ${BUTTON_SIZES[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
+      {...props}
+    >
+      {loading ? (
+        <span className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+      ) : (
+        icon
+      )}
+      {children}
+    </button>
+  ),
+);
+Button.displayName = 'Button';
+
+const FIELD_BASE =
+  'w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 transition-colors disabled:opacity-50';
+
+export function Label({
+  children,
+  htmlFor,
+  required,
+}: {
+  children: ReactNode;
+  htmlFor?: string;
+  required?: boolean;
+}) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="block text-sm font-medium text-slate-300 mb-1.5"
+    >
+      {children}
+      {required && <span className="text-red-400 ml-0.5">*</span>}
+    </label>
+  );
+}
+
+export const Input = forwardRef<
+  HTMLInputElement,
+  InputHTMLAttributes<HTMLInputElement>
+>(({ className = '', ...props }, ref) => (
+  <input ref={ref} className={`${FIELD_BASE} ${className}`} {...props} />
+));
+Input.displayName = 'Input';
+
+export const Textarea = forwardRef<
+  HTMLTextAreaElement,
+  TextareaHTMLAttributes<HTMLTextAreaElement>
+>(({ className = '', ...props }, ref) => (
+  <textarea
+    ref={ref}
+    className={`${FIELD_BASE} resize-none ${className}`}
+    {...props}
+  />
+));
+Textarea.displayName = 'Textarea';
+
+export const Select = forwardRef<
+  HTMLSelectElement,
+  SelectHTMLAttributes<HTMLSelectElement>
+>(({ className = '', children, ...props }, ref) => (
+  <select ref={ref} className={`${FIELD_BASE} cursor-pointer ${className}`} {...props}>
+    {children}
+  </select>
+));
+Select.displayName = 'Select';
+
+/** Campo completo: label + controle. */
+export function Field({
+  label,
+  required,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  htmlFor?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      <Label htmlFor={htmlFor} required={required}>
+        {label}
+      </Label>
+      {children}
+    </div>
+  );
+}
+
+/** Alias para Input (para compat com código antigo). */
+export const TextInput = Input;
+
+/** Modal simples. */
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+  footer?: ReactNode;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-xl max-w-md w-full">
+        <div className="flex items-center justify-between p-6 border-b border-slate-700">
+          <h2 className="text-lg font-bold text-white">{title}</h2>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="p-6 space-y-4">{children}</div>
+        {footer && (
+          <div className="flex gap-3 p-6 border-t border-slate-700">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function PageHeader({
   title,
@@ -77,7 +267,13 @@ export function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-const STATUS_STYLES: Record<string, string> = {
+/* ------------------------------------------------------------------ *
+ * Fonte única de cores/labels de status e prioridade.
+ * Qualquer tela que precise dessas cores deve importar daqui em vez
+ * de redefinir os mapas localmente (evita divergência de paleta).
+ * ------------------------------------------------------------------ */
+
+export const STATUS_STYLES: Record<string, string> = {
   OPEN: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
   IN_PROGRESS: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
   WAITING: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
@@ -85,7 +281,7 @@ const STATUS_STYLES: Record<string, string> = {
   CLOSED: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
 };
 
-const STATUS_LABELS: Record<string, string> = {
+export const STATUS_LABELS: Record<string, string> = {
   OPEN: 'Aberto',
   IN_PROGRESS: 'Em Andamento',
   WAITING: 'Aguardando',
@@ -105,18 +301,26 @@ export function StatusBadge({ status }: { status: string }) {
   );
 }
 
-const PRIORITY_STYLES: Record<string, string> = {
+export const PRIORITY_STYLES: Record<string, string> = {
   LOW: 'bg-green-500/15 text-green-300 border-green-500/30',
   MEDIUM: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/30',
   HIGH: 'bg-orange-500/15 text-orange-300 border-orange-500/30',
   URGENT: 'bg-red-500/15 text-red-300 border-red-500/30',
 };
 
-const PRIORITY_LABELS: Record<string, string> = {
+export const PRIORITY_LABELS: Record<string, string> = {
   LOW: 'Baixa',
   MEDIUM: 'Média',
   HIGH: 'Alta',
   URGENT: 'Urgente',
+};
+
+/** Cor sólida do "dot" de prioridade (semáforo) para listagens. */
+export const PRIORITY_DOT: Record<string, string> = {
+  LOW: 'bg-green-500',
+  MEDIUM: 'bg-yellow-500',
+  HIGH: 'bg-orange-500',
+  URGENT: 'bg-red-500',
 };
 
 export function PriorityBadge({ priority }: { priority: string }) {
