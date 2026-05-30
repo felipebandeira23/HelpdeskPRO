@@ -298,6 +298,24 @@ model ChecklistItem {
   @@map("checklist_items")
 }
 
+model AutomationRule {
+  id          String @id @default(cuid())
+  name        String
+  description String?
+
+  trigger     String // "ticket_created", "ticket_updated", "sla_warning", etc
+  conditions  Json   // Filter conditions
+  actions     Json   // Actions to execute
+  enabled     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([trigger])
+  @@index([enabled])
+  @@map("automation_rules")
+}
+
 model AuditLog {
   id        String @id @default(cuid())
   userId    String
