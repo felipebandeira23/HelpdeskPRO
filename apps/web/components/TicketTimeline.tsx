@@ -47,7 +47,21 @@ export default function TicketTimeline({
 }: TicketTimelineProps) {
   const [message, setMessage] = useState('');
   const [isInternal, setIsInternal] = useState(false);
+  const [timeSpent, setTimeSpent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showMacros, setShowMacros] = useState(false);
+
+  const macros = [
+    "Prezado(a), analisamos o caso e o problema foi resolvido. Estamos à disposição.",
+    "Por favor, poderia nos fornecer um print da tela com o erro?",
+    "Aguardando liberação de acesso remoto para prosseguir.",
+    "Equipamento encaminhado para garantia. Prazo estimado: 15 dias."
+  ];
+
+  const handleMacroSelect = (macro: string) => {
+    setMessage(prev => prev ? `${prev}\n\n${macro}` : macro);
+    setShowMacros(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,32 +141,78 @@ export default function TicketTimeline({
 
       {/* Input area - Fixed at bottom */}
       <div className="border-t border-slate-700 pt-4 mt-auto">
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3 relative">
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Escreva seu acompanhamento..."
+            placeholder="Escreva sua resposta..."
             rows={3}
             disabled={isSubmitting}
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 disabled:opacity-50 resize-none"
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 disabled:opacity-50 resize-none shadow-inner"
           />
 
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer hover:text-slate-300">
+          {showMacros && (
+            <div className="absolute bottom-full left-0 mb-2 w-80 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-10">
+              <div className="px-3 py-2 border-b border-slate-700 bg-slate-900/50">
+                <span className="text-xs font-bold text-slate-400 uppercase">Respostas Rápidas (Macros)</span>
+              </div>
+              <div className="max-h-48 overflow-y-auto">
+                {macros.map((macro, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => handleMacroSelect(macro)}
+                    className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-blue-600 hover:text-white transition-colors border-b border-slate-700/50 last:border-0"
+                  >
+                    <span className="line-clamp-2">{macro}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
+            <button
+              type="button"
+              onClick={() => setShowMacros(!showMacros)}
+              className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded transition-colors flex items-center gap-2 font-medium"
+            >
+              <span>⚡</span> Macros
+            </button>
+
+            <div className="h-6 w-px bg-slate-700 mx-1"></div>
+
+            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white transition-colors">
               <input
                 type="checkbox"
                 checked={isInternal}
                 onChange={(e) => setIsInternal(e.target.checked)}
                 disabled={isSubmitting}
-                className="rounded border-slate-600"
+                className="rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
               />
-              Nota interna
+              <span className="flex items-center gap-1"><span className="text-purple-400">🔒</span> Nota interna</span>
             </label>
+
+            <div className="h-6 w-px bg-slate-700 mx-1 ml-auto"></div>
+
+            <div className="flex items-center gap-2 relative group">
+              <span className="text-sm text-slate-400" title="Apontamento de Horas">⏱️ Gasto:</span>
+              <input 
+                type="text" 
+                placeholder="00:00" 
+                value={timeSpent}
+                onChange={(e) => setTimeSpent(e.target.value)}
+                className="w-16 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-center text-slate-200 focus:outline-none focus:border-blue-500 font-mono"
+              />
+              <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-slate-900 text-xs text-slate-400 rounded border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                Aponte o tempo gasto neste acompanhamento (Ex: 01:30 para 1h e 30m). Será faturado no contrato.
+              </div>
+            </div>
 
             <button
               type="submit"
               disabled={isSubmitting || !message.trim()}
-              className="ml-auto bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="ml-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:opacity-50 text-white px-6 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-blue-500/20"
             >
               {isSubmitting ? 'Enviando...' : 'Enviar'}
             </button>

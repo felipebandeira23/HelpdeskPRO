@@ -1,0 +1,26 @@
+name: New MCP server
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: notion
+    command: npx
+    args:
+      - -y
+      - "@notionhq/notion-mcp-server"
+    env:
+      NOTION_TOKEN: "SEU_NOTION_TOKEN_AQUI"
+
+  - name: google
+    command: npx
+    args:
+      - -y
+      - "@pegasusheavy/google-mcp"
+    env: {}
+
+  - name: github
+    command: npx
+    args:
+      - -y
+      - "@modelcontextprotocol/server-github"
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: "SEU_GITHUB_PAT_AQUI"

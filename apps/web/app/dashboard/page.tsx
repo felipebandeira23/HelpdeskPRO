@@ -11,7 +11,9 @@ import {
   StatCard,
   StatusBadge,
   PriorityBadge,
-} from '@/components/ui';
+  STATUS_LABELS,
+  PRIORITY_LABELS,
+} from '@/components/ui'; // STATUS_LABELS e PRIORITY_LABELS vêm daqui
 
 interface DashboardStats {
   ticketsOpen: number;
@@ -43,6 +45,7 @@ interface SLAItem {
   ticket: { id: string; title: string };
 }
 
+// Cores para gráficos (convertem status/priority em hex para DonutChart)
 const STATUS_COLORS: Record<string, string> = {
   OPEN: '#3b82f6',
   IN_PROGRESS: '#f59e0b',
@@ -51,26 +54,11 @@ const STATUS_COLORS: Record<string, string> = {
   CLOSED: '#10b981',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  OPEN: 'Aberto',
-  IN_PROGRESS: 'Em Andamento',
-  WAITING: 'Aguardando',
-  PAUSED: 'Pausado',
-  CLOSED: 'Fechado',
-};
-
 const PRIORITY_COLORS: Record<string, string> = {
   LOW: '#22c55e',
   MEDIUM: '#eab308',
   HIGH: '#f97316',
   URGENT: '#ef4444',
-};
-
-const PRIORITY_LABELS: Record<string, string> = {
-  LOW: 'Baixa',
-  MEDIUM: 'Média',
-  HIGH: 'Alta',
-  URGENT: 'Urgente',
 };
 
 export default function DashboardPage() {

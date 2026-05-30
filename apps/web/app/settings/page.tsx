@@ -35,9 +35,16 @@ const settingsCards = [
   {
     href: '/settings/security',
     icon: '🔒',
-    title: 'Segurança',
-    description: '2FA, log de auditoria e políticas de acesso',
+    title: 'Segurança e Autenticação',
+    description: '2FA, LDAP / Active Directory e políticas',
     color: 'text-red-500',
+  },
+  {
+    href: '/settings/portal',
+    icon: '🌐',
+    title: 'Portal do Cliente',
+    description: 'Customização visual e White-label',
+    color: 'text-indigo-500',
   },
 ];
 

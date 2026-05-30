@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { api } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,25 +18,15 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, password }),
-        },
+      const data = await api.post<{ access_token: string; user: any }>(
+        '/auth/login',
+        { email, password },
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Falha na autenticação');
-      }
-
-      const data = await response.json();
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      // Save token as cookie so middleware can protect routes
+      document.cookie = `access_token=${data.access_token}; path=/; max-age=604800`;
       // Full page navigation so AuthProvider re-reads the token from localStorage
       window.location.href = '/dashboard';
     } catch (err) {

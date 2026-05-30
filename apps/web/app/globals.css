@@ -2,11 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --color-primary: #2b73c9;
-  --color-success: #2db87d;
-  --color-danger: #e85d2d;
-}
+/*
+ * Tokens do design system vivem em styles/theme.css (fonte única).
+ * Não duplicar variáveis de cor aqui.
+ */
 
 * {
   margin: 0;

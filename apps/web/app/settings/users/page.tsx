@@ -9,14 +9,13 @@ import {
   Spinner,
   EmptyState,
   ErrorBanner,
-} from '@/components/ui';
-import {
-  Modal,
-  Field,
-  TextInput,
-  Select,
   Button,
-} from '@/components/Modal';
+  Input,
+  Select,
+  Field,
+  Label,
+  Modal,
+} from '@/components/ui';
 
 interface User {
   id: string;
@@ -208,14 +207,14 @@ export default function UsersPage() {
       >
         {formError && <ErrorBanner message={formError} />}
         <Field label="Nome">
-          <TextInput
+          <Input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="Nome completo"
           />
         </Field>
         <Field label="Email">
-          <TextInput
+          <Input
             type="email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -225,7 +224,7 @@ export default function UsersPage() {
         <Field
           label={editing ? 'Nova senha (deixe em branco para manter)' : 'Senha'}
         >
-          <TextInput
+          <Input
             type="password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}

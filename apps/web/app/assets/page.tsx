@@ -10,6 +10,7 @@ import {
   EmptyState,
   ErrorBanner,
   StatCard,
+  Input,
 } from '@/components/ui';
 
 interface Asset {
@@ -80,14 +81,14 @@ export default function AssetsPage() {
       </div>
 
       <Panel>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 gap-4">
           <h2 className="text-lg font-bold text-white">Dispositivos</h2>
-          <input
+          <Input
             type="text"
             placeholder="Buscar por hostname, IP, fabricante..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-blue-500 w-72"
+            className="w-72"
           />
         </div>
 

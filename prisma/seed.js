@@ -1,36 +1,47 @@
 const { PrismaClient, UserRole, TicketStatus, TicketPriority } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Iniciando seed do banco de dados...');
 
+  const adminHash = await bcrypt.hash('admin123', 12);
+  const techHash = await bcrypt.hash('tech123', 12);
+  const userHash = await bcrypt.hash('user123', 12);
+
   // NOTE: Em produção, use bcrypt. Para desenvolvimento, senhas plaintext são OK.
-  const adminUser = await prisma.user.create({
-    data: {
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@helpdeskpro.local' },
+    update: { password: adminHash },
+    create: {
       email: 'admin@helpdeskpro.local',
       name: 'Administrador',
-      password: 'admin123',
+      password: adminHash,
       role: UserRole.ADMIN,
       active: true,
     },
   });
 
-  const technicianUser = await prisma.user.create({
-    data: {
+  const technicianUser = await prisma.user.upsert({
+    where: { email: 'tecnico@helpdeskpro.local' },
+    update: { password: techHash },
+    create: {
       email: 'tecnico@helpdeskpro.local',
       name: 'Técnico de Suporte',
-      password: 'tech123',
+      password: techHash,
       role: UserRole.TECHNICIAN,
       active: true,
     },
   });
 
-  const viewerUser = await prisma.user.create({
-    data: {
+  const viewerUser = await prisma.user.upsert({
+    where: { email: 'usuario@helpdeskpro.local' },
+    update: { password: userHash },
+    create: {
       email: 'usuario@helpdeskpro.local',
       name: 'Usuário Comum',
-      password: 'user123',
+      password: userHash,
       role: UserRole.VIEWER,
       active: true,
     },

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { api } from '@/lib/api';
 import TicketTimeline from '@/components/TicketTimeline';
 import TicketMetadata from '@/components/TicketMetadata';
 
@@ -43,20 +44,7 @@ export default function TicketDetailPage() {
 
   const loadTicket = async () => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${ticketId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-          },
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error('Ticket não encontrado');
-      }
-
-      const data = await response.json();
+      const data = await api.get<TicketDetail>(`/api/tickets/${ticketId}`);
       setTicket(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar ticket');
@@ -67,22 +55,7 @@ export default function TicketDetailPage() {
 
   const handleTimelineAddFollowup = async (message: string, isInternal: boolean) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${ticketId}/followups`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-          },
-          body: JSON.stringify({ message, isInternal }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error('Erro ao adicionar acompanhamento');
-      }
-
+      await api.post(`/api/tickets/${ticketId}/followups`, { message, isInternal });
       await loadTicket();
     } catch (err) {
       console.error('Erro ao adicionar followup:', err);
@@ -93,23 +66,7 @@ export default function TicketDetailPage() {
     try {
       const updateData: Record<string, any> = {};
       updateData[field] = value;
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tickets/${ticketId}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-          },
-          body: JSON.stringify(updateData),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error('Erro ao atualizar ticket');
-      }
-
+      await api.patch(`/api/tickets/${ticketId}`, updateData);
       await loadTicket();
     } catch (err) {
       console.error('Erro ao atualizar:', err);

@@ -44,7 +44,10 @@
       "Bash(taskkill /PID 28556 /F)",
       "PowerShell(Stop-Process -Id 17260 -Force)",
       "PowerShell(Stop-Process -Id 28556 -Force)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "mcp__432508c1-a6f6-4106-ab1a-12aa771a1d24__notion-search",
+      "mcp__432508c1-a6f6-4106-ab1a-12aa771a1d24__notion-fetch",
+      "Bash(git rm *)"
     ]
   }
 }
