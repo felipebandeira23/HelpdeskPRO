@@ -17,6 +17,11 @@ import { RatingsModule } from './modules/ratings/ratings.module';
 import { VaultModule } from './modules/vault/vault.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { LdapModule } from './modules/ldap/ldap.module';
+import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
+import { BillingModule } from './modules/billing/billing.module';
+import { TVModeModule } from './modules/tvmode/tvmode.module';
+import { NetworkModule } from './modules/network/network.module';
 import { PrismaService } from './common/prisma/prisma.service';
 
 @Module({
@@ -40,6 +45,11 @@ import { PrismaService } from './common/prisma/prisma.service';
     VaultModule,
     ReportsModule,
     NotificationsModule,
+    LdapModule,
+    WhatsappModule,
+    BillingModule,
+    TVModeModule,
+    NetworkModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
