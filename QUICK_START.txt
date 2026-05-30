@@ -1,0 +1,38 @@
+﻿# ⚡ QUICK START - HelpDesk PRO
+
+## 30 segundos para rodar
+
+\\\ash
+cd "E:\Helpdesk PRO"
+
+# 1. Dependências
+npm install
+
+# 2. Copiar configuração
+copy .env.example .env
+
+# 3. BD (Docker recomendado)
+docker-compose up -d db
+
+# 4. Sincronizar
+npx prisma db push
+
+# 5. Dados iniciais
+node prisma/seed-admin.js
+
+# 6. Iniciar (em 2 terminais):
+# Terminal 1: Backend
+cd apps/api && npm run start:dev
+
+# Terminal 2: Frontend
+cd apps/web && npm run dev
+\\\
+
+## Pronto!
+
+- Acesse: http://localhost:3001
+- Login: admin@helpdesk.local
+- Senha: Admin@123456
+
+## Precisa de ajuda?
+Veja INSTALL.md para guia completo
