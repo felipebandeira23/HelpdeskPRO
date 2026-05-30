@@ -235,17 +235,48 @@
 
 ---
 
-## Próximas Ações (Agora)
+## Progresso Atual (Session 1 - 2026-05-29)
 
+### ✅ Completado
 1. ✅ Setup .env.local
 2. ✅ Docker-compose verificado
-3. **→ Iniciar Docker (banco de dados)**
-4. **→ Rodar migrações Prisma**
-5. **→ Executar Sprint 0.7 (testes + Docker)**
-6. **→ Tag v0.1.0-mvp**
-7. **→ Proceder com Phase 1**
+3. ✅ Execução Sprint 0.7 (testes + Docker)
+4. ✅ Tag `v0.1.0-mvp` criado
+5. ✅ **Sprint 1.1:** Split layout 70/30 (TicketTimeline, TicketMetadata)
+6. ✅ **Sprint 1.3:** Checklists service + controller
+7. ✅ **Sprint 1.4:** SLA service + controller
+8. ✅ **Sprint 1.6:** TicketTypes service + controller
+9. ✅ Schema Prisma expandido (SLA, Checklists, Templates)
+10. ✅ Migrações SQL criadas
+
+### 🟡 Próximas Ações
+1. **Frontend Components:**
+   - TicketChecklist component (usar no detail page)
+   - SLA Badge component
+   - TicketType selector
+   
+2. **Backend Services (Priority Order):**
+   - TicketTemplates (Sprint 1.6)
+   - Dashboard/Stats (Sprint 2.1)
+   - AutomationRules (Sprint 2.3)
+   
+3. **Views (Sprint 1.7):**
+   - Kanban board
+   - Cards view
+   - Lista comprimida
+   
+4. **Testing:**
+   - Rodar `docker-compose up` com banco
+   - Rodar migrações
+   - Validar endpoints com testes E2E
+
+### 📈 Métricas
+- **Sprints Completados:** 6 (0.7, 1.1, 1.3, 1.4, 1.6)
+- **Módulos Implementados:** 6 (Auth, Tickets, Stats, SLA, Checklists, TicketTypes)
+- **Linhas de Código Adicionadas:** ~2000+ (testes, componentes, serviços)
 
 ---
 
-**Status:** 🟡 Em andamento  
-**Último update:** 2026-05-29 (initialization)
+**Status:** 🟢 Em progresso  
+**Último update:** 2026-05-29 (Session 1 complete)  
+**Próximo milestone:** Completar Fase 1 (Sprint 1.7) + iniciar Fase 2 (Dashboards & Automation)
