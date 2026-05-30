@@ -24,6 +24,8 @@ import { TVModeModule } from './modules/tvmode/tvmode.module';
 import { NetworkModule } from './modules/network/network.module';
 import { UsersModule } from './modules/users/users.module';
 import { GroupsModule } from './modules/groups/groups.module';
+import { CustomersModule } from './modules/customers/customers.module';
+import { TasksModule } from './modules/tasks/tasks.module';
 import { PrismaService } from './common/prisma/prisma.service';
 
 @Module({
@@ -54,6 +56,8 @@ import { PrismaService } from './common/prisma/prisma.service';
     NetworkModule,
     UsersModule,
     GroupsModule,
+    CustomersModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

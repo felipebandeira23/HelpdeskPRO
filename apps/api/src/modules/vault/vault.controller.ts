@@ -5,28 +5,28 @@ import { VaultService } from './vault.service';
 export class VaultController {
   constructor(private service: VaultService) {}
 
-  @Post('credentials')
-  storeCredential(@Body() data: any) {
-    return this.service.storeCredential(data);
+  @Post()
+  create(@Body() data: any) {
+    return this.service.create(data);
   }
 
-  @Get('credentials/:userId')
-  getCredentials(@Param('userId') userId: string) {
-    return this.service.getCredentials(userId);
+  @Get('user/:userId')
+  findAll(@Param('userId') userId: string) {
+    return this.service.findAll(userId);
   }
 
-  @Get('credentials/:id')
-  getCredential(@Param('id') id: string) {
-    return this.service.getCredential(id);
+  @Get(':id')
+  findOne(@Param('id') id: string, @Body() body: any) {
+    return this.service.findOne(id, body.userId);
   }
 
-  @Patch('credentials/:id')
-  updateCredential(@Param('id') id: string, @Body() data: any) {
-    return this.service.updateCredential(id, data);
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() data: any) {
+    return this.service.update(id, data.userId, data);
   }
 
-  @Delete('credentials/:id')
-  deleteCredential(@Param('id') id: string) {
-    return this.service.deleteCredential(id);
+  @Delete(':id')
+  delete(@Param('id') id: string, @Body() body: any) {
+    return this.service.delete(id, body.userId);
   }
 }
