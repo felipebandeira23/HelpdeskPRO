@@ -24,17 +24,18 @@ services:
       dockerfile: apps/api/Dockerfile
     container_name: helpdeskpro-api
     ports:
-      - '3001:3001'
+      - '3000:3000'
     environment:
       DATABASE_URL: postgresql://helpdeskpro:helpdeskpro@db:5432/helpdeskpro
-      JWT_SECRET: seu-secret-jwt-super-seguro
+      JWT_SECRET: your-super-secret-jwt-key-min-32-chars-long-1234567890
       NODE_ENV: development
-      API_PORT: 3001
+      API_PORT: 3000
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - ./apps/api/src:/app/apps/api/src
+      - ./apps/api/dist:/app/apps/api/dist
 
   web:
     build:
@@ -42,9 +43,9 @@ services:
       dockerfile: apps/web/Dockerfile
     container_name: helpdeskpro-web
     ports:
-      - '3000:3000'
+      - '3001:3001'
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      NEXT_PUBLIC_API_URL: http://api:3000/api
     depends_on:
       - api
     volumes:

@@ -20,7 +20,7 @@ COPY --from=builder /app/apps/api/package.json .
 COPY --from=builder /app/node_modules node_modules
 COPY --from=builder /app/prisma prisma
 
-EXPOSE 3001
+EXPOSE 3000
 
-# Run migrations and seed, then start the application
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node dist/main.js"]
+# Start the application
+CMD ["node", "dist/main.js"]
