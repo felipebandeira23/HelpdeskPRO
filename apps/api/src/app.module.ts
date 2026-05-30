@@ -7,6 +7,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { SLAModule } from './modules/sla/sla.module';
 import { ChecklistsModule } from './modules/checklists/checklists.module';
+import { TicketTypesModule } from './modules/ticket-types/ticket-types.module';
 import { PrismaService } from './common/prisma/prisma.service';
 
 @Module({
@@ -20,6 +21,7 @@ import { PrismaService } from './common/prisma/prisma.service';
     StatsModule,
     SLAModule,
     ChecklistsModule,
+    TicketTypesModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
