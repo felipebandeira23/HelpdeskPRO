@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { Ticket, TicketFollowup } from '@prisma/client';
 
 @Injectable()
 export class PortalService {
@@ -10,7 +11,7 @@ export class PortalService {
     name: string;
     title: string;
     description: string;
-  }) {
+  }): Promise<Ticket> {
     const user = await this.prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -24,7 +25,7 @@ export class PortalService {
     });
   }
 
-  async getTicketsPublic(email: string) {
+  async getTicketsPublic(email: string): Promise<unknown[]> {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -37,7 +38,7 @@ export class PortalService {
     });
   }
 
-  async getTicketPublic(ticketId: string) {
+  async getTicketPublic(ticketId: string): Promise<unknown> {
     return this.prisma.ticket.findUnique({
       where: { id: ticketId },
       select: {
@@ -58,7 +59,11 @@ export class PortalService {
     });
   }
 
-  async addPublicFollowup(ticketId: string, email: string, message: string) {
+  async addPublicFollowup(
+    ticketId: string,
+    email: string,
+    message: string,
+  ): Promise<TicketFollowup> {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });

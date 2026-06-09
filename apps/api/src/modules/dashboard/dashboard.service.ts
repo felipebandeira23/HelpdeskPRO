@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { TicketStatus, TicketPriority } from '@prisma/client';
 
 @Injectable()
 export class DashboardService {
@@ -71,12 +72,12 @@ export class DashboardService {
   }
 
   async getTicketsByStatus() {
-    const statuses = ['OPEN', 'IN_PROGRESS', 'WAITING', 'CLOSED', 'PAUSED'];
+    const statuses: TicketStatus[] = ['OPEN', 'IN_PROGRESS', 'WAITING', 'CLOSED', 'PAUSED'];
     const results = await Promise.all(
       statuses.map(async (status) => ({
         status,
         count: await this.prisma.ticket.count({
-          where: { status: status as any },
+          where: { status },
         }),
       })),
     );
@@ -84,12 +85,12 @@ export class DashboardService {
   }
 
   async getTicketsByPriority() {
-    const priorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+    const priorities: TicketPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
     const results = await Promise.all(
       priorities.map(async (priority) => ({
         priority,
         count: await this.prisma.ticket.count({
-          where: { priority: priority as any },
+          where: { priority },
         }),
       })),
     );

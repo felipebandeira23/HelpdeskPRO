@@ -11,6 +11,7 @@ import {
 interface TicketMetadataProps {
   ticket: {
     id: string;
+    ticketNumber: number;
     title: string;
     status: string;
     priority: string;
@@ -27,22 +28,33 @@ interface TicketMetadataProps {
     checklists?: { id: string; text: string; done: boolean }[];
   };
   onUpdate: (field: string, value: any) => Promise<void>;
+  onDelete?: () => Promise<void>;
+  onSolve?: (solution: string) => Promise<void>;
   loading?: boolean;
 }
 
 const statusOptions = ['OPEN', 'IN_PROGRESS', 'WAITING', 'PAUSED', 'CLOSED'];
 const priorityOptions = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
-export default function TicketMetadata({ ticket, onUpdate, loading = false }: TicketMetadataProps) {
+export default function TicketMetadata({ ticket, onUpdate, onDelete, onSolve, loading = false }: TicketMetadataProps) {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [localProgress, setLocalProgress] = useState(ticket.progress);
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [pauseReason, setPauseReason] = useState('');
+  const [showSolveModal, setShowSolveModal] = useState(false);
+  const [solutionText, setSolutionText] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showSavedFeedback, setShowSavedFeedback] = useState(false);
 
   const handleUpdate = async (field: string, value: any) => {
     if (field === 'status' && value === 'PAUSED') {
       setShowPauseModal(true);
+      return;
+    }
+    
+    if (field === 'status' && value === 'CLOSED') {
+      setShowSolveModal(true);
       return;
     }
 
@@ -50,6 +62,8 @@ export default function TicketMetadata({ ticket, onUpdate, loading = false }: Ti
     try {
       await onUpdate(field, value);
       setEditingField(null);
+      setShowSavedFeedback(true);
+      setTimeout(() => setShowSavedFeedback(false), 2000);
     } finally {
       setUpdating(false);
     }
@@ -64,6 +78,33 @@ export default function TicketMetadata({ ticket, onUpdate, loading = false }: Ti
       setShowPauseModal(false);
       setEditingField(null);
       setPauseReason('');
+      setShowSavedFeedback(true);
+      setTimeout(() => setShowSavedFeedback(false), 2000);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleSolveSubmit = async () => {
+    if (!solutionText.trim() || !onSolve) return;
+    setUpdating(true);
+    try {
+      await onSolve(solutionText);
+      setShowSolveModal(false);
+      setEditingField(null);
+      setSolutionText('');
+      setShowSavedFeedback(true);
+      setTimeout(() => setShowSavedFeedback(false), 2000);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDeleteSubmit = async () => {
+    if (!onDelete) return;
+    setUpdating(true);
+    try {
+      await onDelete();
     } finally {
       setUpdating(false);
     }
@@ -119,8 +160,15 @@ export default function TicketMetadata({ ticket, onUpdate, loading = false }: Ti
     <div className="space-y-6">
       {/* Title */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-1">{ticket.title}</h2>
-        <p className="text-slate-400 text-xs font-mono">#{ticket.id}</p>
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-2xl font-bold text-white">{ticket.title}</h2>
+          {showSavedFeedback && (
+            <span className="text-xs text-green-400 bg-green-500/10 px-2 py-0.5 rounded animate-pulse">
+              ✓ Salvo
+            </span>
+          )}
+        </div>
+        <p className="text-slate-400 text-xs font-mono">#{ticket.ticketNumber}</p>
       </div>
 
       {/* Status - Editable */}
@@ -261,14 +309,18 @@ export default function TicketMetadata({ ticket, onUpdate, loading = false }: Ti
           <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-slate-300">Horas Apontadas:</span>
-              <span className="text-sm font-bold font-mono text-white">03h 45m</span>
+              <span className="text-sm font-bold font-mono text-white">
+                {String(Math.floor(((localProgress / 5) * 15) / 60)).padStart(2, '0')}h {String(((localProgress / 5) * 15) % 60).padStart(2, '0')}m
+              </span>
             </div>
             <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden mb-3">
-              <div className="bg-blue-500 h-full w-[45%]"></div>
+              <div className="bg-blue-500 h-full" style={{ width: `${localProgress}%` }}></div>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-slate-700/50">
               <span className="text-sm text-slate-400">Custo Estimado:</span>
-              <span className="text-sm font-bold text-green-400">R$ 562,50</span>
+              <span className="text-sm font-bold text-green-400">
+                {(((localProgress / 5) * 15) / 60 * 150).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </span>
             </div>
             {ticket.contractStatus === 'INACTIVE' && (
               <p className="text-[10px] text-red-400 mt-2 font-medium bg-red-900/20 p-1.5 rounded border border-red-900/50">
@@ -368,6 +420,19 @@ export default function TicketMetadata({ ticket, onUpdate, loading = false }: Ti
             <p>Fechado: {new Date(ticket.closedAt).toLocaleString('pt-BR')}</p>
           )}
         </div>
+
+        {/* Delete Button */}
+        {onDelete && (
+          <div className="border-t border-slate-700 pt-4">
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={updating}
+              className="w-full py-2 text-sm text-red-400 border border-red-900/50 hover:bg-red-900/20 rounded-lg transition-colors font-medium"
+            >
+              Excluir Ticket
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Pause Reason Modal */}
@@ -404,6 +469,74 @@ export default function TicketMetadata({ ticket, onUpdate, loading = false }: Ti
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium text-sm"
               >
                 {updating ? 'Salvando...' : 'Confirmar Pausa'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Solve Reason Modal */}
+      {showSolveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-2">Solucionar Ticket</h3>
+            <p className="text-slate-400 text-sm mb-4">
+              Por favor, descreva a solução aplicada a este ticket antes de fechá-lo.
+            </p>
+            
+            <textarea
+              value={solutionText}
+              onChange={(e) => setSolutionText(e.target.value)}
+              placeholder="Ex: Atualizei o driver e reiniciei a máquina..."
+              className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-slate-200 min-h-[100px] mb-4 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              autoFocus
+            />
+            
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowSolveModal(false);
+                  setEditingField(null);
+                  setSolutionText('');
+                }}
+                className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors font-medium text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSolveSubmit}
+                disabled={!solutionText.trim() || updating}
+                className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium text-sm"
+              >
+                {updating ? 'Salvando...' : 'Solucionar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-2">Excluir Ticket</h3>
+            <p className="text-slate-400 text-sm mb-6">
+              Tem certeza que deseja excluir o ticket <strong>#{ticket.id}</strong>? Esta ação não pode ser desfeita.
+            </p>
+            
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors font-medium text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteSubmit}
+                disabled={updating}
+                className="px-4 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white rounded-lg transition-colors font-medium text-sm"
+              >
+                {updating ? 'Excluindo...' : 'Excluir'}
               </button>
             </div>
           </div>

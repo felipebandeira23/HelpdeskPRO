@@ -26,4 +26,6 @@ async function bootstrap() {
   console.log(`🚀 API rodando em http://localhost:${port}`);
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Erro ao iniciar a aplicação:', err);
+});

@@ -9,20 +9,22 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('login')
-  async login(@Body() dto: LoginDto) {
+  async login(
+    @Body() dto: LoginDto,
+  ): Promise<{ access_token: string; user: { id: string; email: string; name: string; role: string } }> {
     return this.authService.login(dto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  logout(@Request() req: ExpressRequest) {
+  logout(@Request() _req: ExpressRequest): { message: string } {
     return { message: 'Logout realizado com sucesso' };
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('me')
-  getProfile(@Request() req: ExpressRequest) {
-    const user = req.user as any;
+  getProfile(@Request() req: ExpressRequest): { id: string; email: string; name: string; role: string } {
+    const user = req.user as { id: string; email: string; name: string; role: string };
     return {
       id: user.id,
       email: user.email,

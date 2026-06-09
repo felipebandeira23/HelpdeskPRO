@@ -7,7 +7,8 @@ export class NotificationsService {
     type: 'email' | 'push' | 'in-app';
     subject: string;
     message: string;
-  }) {
+  }): Promise<unknown> {
+    await Promise.resolve();
     return {
       id: 'notif-' + Date.now(),
       userId: data.userId,
@@ -17,15 +18,21 @@ export class NotificationsService {
     };
   }
 
-  async getNotifications(userId: string) {
+  async getNotifications(_userId: string): Promise<unknown[]> {
+    await Promise.resolve();
     return [];
   }
 
-  async markAsRead(notificationId: string) {
+  async markAsRead(notificationId: string): Promise<unknown> {
+    await Promise.resolve();
     return { notificationId, read: true };
   }
 
-  async setNotificationPreferences(userId: string, preferences: any) {
+  async setNotificationPreferences(
+    userId: string,
+    preferences: Record<string, unknown>,
+  ): Promise<unknown> {
+    await Promise.resolve();
     return { userId, preferences };
   }
 }

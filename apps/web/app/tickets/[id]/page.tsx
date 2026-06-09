@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import TicketTimeline from '@/components/TicketTimeline';
 import TicketMetadata from '@/components/TicketMetadata';
 
 interface TicketDetail {
   id: string;
+  ticketNumber: number;
   title: string;
   description: string;
   status: string;
@@ -32,6 +33,7 @@ interface TicketDetail {
 
 export default function TicketDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const ticketId = params.id as string;
 
   const [ticket, setTicket] = useState<TicketDetail | null>(null);
@@ -73,6 +75,25 @@ export default function TicketDetailPage() {
     }
   };
 
+  const handleSolve = async (solution: string) => {
+    try {
+      await api.post(`/api/tickets/${ticketId}/followups`, { message: `**Solução:**\n${solution}`, isInternal: false });
+      await api.patch(`/api/tickets/${ticketId}`, { status: 'CLOSED' });
+      await loadTicket();
+    } catch (err) {
+      console.error('Erro ao solucionar:', err);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await api.delete(`/api/tickets/${ticketId}`);
+      router.push('/tickets');
+    } catch (err) {
+      console.error('Erro ao deletar:', err);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
@@ -80,7 +101,7 @@ export default function TicketDetailPage() {
         <Link href="/tickets" className="text-blue-400 hover:text-blue-300">
           ← Voltar
         </Link>
-        <h1 className="text-lg font-bold text-white">#{ticket?.id}</h1>
+        <h1 className="text-lg font-bold text-white">#{ticket?.ticketNumber}</h1>
       </div>
 
       {/* Main content - Split layout 70/30 */}
@@ -110,6 +131,8 @@ export default function TicketDetailPage() {
             <TicketMetadata
               ticket={ticket}
               onUpdate={handleMetadataUpdate}
+              onDelete={handleDelete}
+              onSolve={handleSolve}
               loading={loading}
             />
           )}

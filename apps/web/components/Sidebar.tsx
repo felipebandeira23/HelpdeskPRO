@@ -23,7 +23,6 @@ const sections: MenuSection[] = [
       { icon: '📊', label: 'Dashboard', href: '/dashboard', color: 'text-blue-500' },
       { icon: '🎫', label: 'Tickets', href: '/tickets', color: 'text-emerald-500' },
       { icon: '✅', label: 'Tarefas', href: '/tasks', color: 'text-cyan-400' },
-      { icon: '🔄', label: 'Recorrentes', href: '/recurring-tickets', color: 'text-teal-400' },
       { icon: '📅', label: 'Planejamento', href: '/planning', color: 'text-cyan-500' },
       { icon: '💬', label: 'Chat', href: '/chat', color: 'text-green-500' },
     ],

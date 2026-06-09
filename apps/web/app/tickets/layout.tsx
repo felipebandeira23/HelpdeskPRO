@@ -1,15 +1,11 @@
 'use client';
 
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { AppShell } from '@/components/AppShell';
 
 export default function TicketsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <ProtectedRoute>
-      {children}
-    </ProtectedRoute>
-  );
+  return <AppShell>{children}</AppShell>;
 }

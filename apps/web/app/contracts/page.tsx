@@ -3,12 +3,31 @@
 import { PageHeader, Panel } from '@/components/ui';
 
 export default function ContractsPage() {
-  const contracts = [
-    { id: '1', supplier: 'Dell Computadores', type: 'Garantia NBD (ProSupport)', assetsCovered: 45, expireAt: '2028-05-10', cost: 'Incluso no Hardware', status: 'ATIVO' },
-    { id: '2', supplier: 'Claro Empresa', type: 'Link Dedicado 1Gbps', assetsCovered: 2, expireAt: '2026-10-15', cost: 'R$ 2.500/mês', status: 'ATIVO' },
-    { id: '3', supplier: 'Mundo do Ar Condicionado', type: 'Manutenção Preventiva Semestral', assetsCovered: 15, expireAt: '2026-06-01', cost: 'R$ 1.200/semestre', status: 'VENCE EM BREVE' },
-    { id: '4', supplier: 'Localiza Tech', type: 'Leasing de Notebooks', assetsCovered: 120, expireAt: '2025-12-31', cost: 'R$ 15.000/mês', status: 'EXPIRADO' },
+  const today = new Date('2026-06-09');
+
+  const rawContracts = [
+    { id: '1', supplier: 'Dell Computadores', type: 'Garantia NBD (ProSupport)', assetsCovered: 45, expireAt: '2028-05-10', cost: 'Incluso no Hardware' },
+    { id: '2', supplier: 'Claro Empresa', type: 'Link Dedicado 1Gbps', assetsCovered: 2, expireAt: '2026-10-15', cost: 'R$ 2.500/mês' },
+    { id: '3', supplier: 'Mundo do Ar Condicionado', type: 'Manutenção Preventiva Semestral', assetsCovered: 15, expireAt: '2026-06-25', cost: 'R$ 1.200/semestre' },
+    { id: '4', supplier: 'Localiza Tech', type: 'Leasing de Notebooks', assetsCovered: 120, expireAt: '2025-12-31', cost: 'R$ 15.000/mês' },
   ];
+
+  const getContractStatus = (expireStr: string) => {
+    const expireDate = new Date(expireStr);
+    const diffTime = expireDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return 'EXPIRADO';
+    if (diffDays <= 30) return 'VENCE EM BREVE';
+    return 'ATIVO';
+  };
+
+  const contracts = rawContracts.map(c => ({
+    ...c,
+    status: getContractStatus(c.expireAt)
+  }));
+
+  const activeCount = contracts.filter(c => c.status !== 'EXPIRADO').length;
+  const expiringCount = contracts.filter(c => c.status === 'VENCE EM BREVE').length;
 
   return (
     <div className="p-8">
@@ -23,12 +42,12 @@ export default function ContractsPage() {
         <div className="bg-slate-800/80 p-5 rounded-xl border border-slate-700/80 shadow-lg relative overflow-hidden group">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all"></div>
           <h3 className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-2">Contratos Ativos</h3>
-          <p className="text-3xl font-bold text-white">12</p>
+          <p className="text-3xl font-bold text-white">{activeCount}</p>
         </div>
         <div className="bg-slate-800/80 p-5 rounded-xl border border-amber-700/50 shadow-lg relative overflow-hidden group">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all"></div>
           <h3 className="text-amber-400/80 text-sm font-medium uppercase tracking-wider mb-2">Vencendo nos próximos 30 dias</h3>
-          <p className="text-3xl font-bold text-amber-400">1</p>
+          <p className="text-3xl font-bold text-amber-400">{expiringCount}</p>
         </div>
         <div className="bg-slate-800/80 p-5 rounded-xl border border-slate-700/80 shadow-lg relative overflow-hidden group">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all"></div>

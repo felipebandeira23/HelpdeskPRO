@@ -12,12 +12,12 @@ export class ReportsController {
       type: string;
       dateRange: { from: Date; to: Date };
     },
-  ) {
+  ): Promise<unknown> {
     return this.service.generateReport(data.type, data.dateRange);
   }
 
   @Get('history/:userId')
-  getReportHistory(@Param('userId') userId: string) {
+  getReportHistory(@Param('userId') userId: string): Promise<unknown[]> {
     return this.service.getReportHistory(userId);
   }
 
@@ -25,7 +25,7 @@ export class ReportsController {
   exportReport(
     @Param('reportId') reportId: string,
     @Query('format') format: 'pdf' | 'csv' | 'xlsx',
-  ) {
+  ): Promise<unknown> {
     return this.service.exportReport(reportId, format);
   }
 }

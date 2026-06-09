@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <ProtectedRoute>
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 bg-slate-950 min-h-[calc(100vh-80px)]">
+        <main className="flex-1 min-w-0 bg-slate-950 min-h-[calc(100vh-80px)]">
           {children}
         </main>
       </div>

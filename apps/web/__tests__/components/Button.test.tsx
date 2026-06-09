@@ -73,7 +73,7 @@ describe('Button Component', () => {
     render(<Button disabled>Disabled</Button>)
     const button = screen.getByText('Disabled') as HTMLButtonElement
     expect(button.disabled).toBe(true)
-    expect(button).toHaveClass('opacity-50')
+    expect(button).toHaveClass('disabled:opacity-50')
   })
 
   it('is disabled when loading prop is true', () => {

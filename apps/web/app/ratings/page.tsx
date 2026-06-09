@@ -32,14 +32,14 @@ export default function RatingsPage() {
                 <div className="flex items-center gap-2">
                   <div className="flex text-yellow-400 text-sm">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <span key={i} className={i < f.rating ? 'opacity-100' : 'opacity-30'}>★</span>
+                      <span key={i} className={i < f.rating ? 'text-yellow-400' : 'text-slate-600'}>{i < f.rating ? '★' : '☆'}</span>
                     ))}
                   </div>
                   <span className="text-slate-500 text-xs">{f.date}</span>
                 </div>
               </div>
               {f.comment ? (
-                <p className="text-slate-300 text-sm italic">"{f.comment}"</p>
+                <p className="text-slate-300 text-sm italic">&ldquo;{f.comment}&rdquo;</p>
               ) : (
                 <p className="text-slate-500 text-sm italic">Sem comentário adicional.</p>
               )}

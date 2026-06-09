@@ -32,7 +32,11 @@ describe('Input Component', () => {
 
   it('accepts value prop and updates on input', async () => {
     const user = userEvent.setup()
-    const { rerender } = render(<Input value="" onChange={() => {}} />)
+    const Wrapper = () => {
+      const [value, setValue] = React.useState('')
+      return <Input value={value} onChange={(e) => setValue(e.target.value)} />
+    }
+    render(<Wrapper />)
 
     const input = screen.getByRole('textbox') as HTMLInputElement
     expect(input.value).toBe('')
@@ -73,8 +77,8 @@ describe('Input Component', () => {
   })
 
   it('renders with password type', () => {
-    render(<Input type="password" />)
-    const input = screen.getByRole('textbox') as HTMLInputElement
+    const { container } = render(<Input type="password" />)
+    const input = container.querySelector('input') as HTMLInputElement
     expect(input.type).toBe('password')
   })
 

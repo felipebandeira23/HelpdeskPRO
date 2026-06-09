@@ -22,4 +22,12 @@ export class CreateTicketDto {
   @IsOptional()
   @IsUUID()
   assetId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  assignedToId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  requesterId?: string;
 }

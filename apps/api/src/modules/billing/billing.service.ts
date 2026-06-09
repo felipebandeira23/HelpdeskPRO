@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-interface Contract {
+export interface Contract {
   id: string;
   customerId: string;
   amount: number;
@@ -17,6 +17,7 @@ export class BillingService {
     startDate: Date;
     endDate: Date;
   }): Promise<Contract> {
+    await Promise.resolve();
     return {
       id: `contract-${Date.now()}`,
       customerId: data.customerId,
@@ -27,7 +28,8 @@ export class BillingService {
     };
   }
 
-  async getContractStatus(contractId: string) {
+  async getContractStatus(contractId: string): Promise<unknown> {
+    await Promise.resolve();
     return {
       id: contractId,
       status: 'active',
@@ -38,7 +40,8 @@ export class BillingService {
     };
   }
 
-  async generateInvoice(contractId: string, period: { from: Date; to: Date }) {
+  async generateInvoice(contractId: string, period: { from: Date; to: Date }): Promise<unknown> {
+    await Promise.resolve();
     return {
       id: `inv-${Date.now()}`,
       contractId,
@@ -53,7 +56,8 @@ export class BillingService {
     };
   }
 
-  async recordPayment(contractId: string, amount: number, method: string) {
+  async recordPayment(contractId: string, amount: number, method: string): Promise<unknown> {
+    await Promise.resolve();
     return {
       id: `payment-${Date.now()}`,
       contractId,
@@ -64,7 +68,8 @@ export class BillingService {
     };
   }
 
-  async suspendContract(contractId: string, reason: string) {
+  async suspendContract(contractId: string, reason: string): Promise<unknown> {
+    await Promise.resolve();
     return {
       contractId,
       status: 'suspended',
@@ -73,7 +78,8 @@ export class BillingService {
     };
   }
 
-  async getCustomerBillingHistory(customerId: string) {
+  async getCustomerBillingHistory(customerId: string): Promise<unknown> {
+    await Promise.resolve();
     return {
       customerId,
       totalAmount: 12000,

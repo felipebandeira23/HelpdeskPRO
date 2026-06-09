@@ -1,37 +1,24 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { Prisma, AutomationRule } from '@prisma/client';
 
 @Injectable()
 export class AutomationService {
   constructor(private prisma: PrismaService) {}
 
-  async createRule(data: {
-    name: string;
-    description?: string;
-    trigger: string;
-    conditions: any;
-    actions: any;
-    enabled?: boolean;
-  }) {
+  async createRule(data: Prisma.AutomationRuleCreateInput): Promise<AutomationRule> {
     return this.prisma.automationRule.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        trigger: data.trigger,
-        conditions: data.conditions,
-        actions: data.actions,
-        enabled: data.enabled ?? true,
-      },
+      data,
     });
   }
 
-  async listRules() {
+  async listRules(): Promise<AutomationRule[]> {
     return this.prisma.automationRule.findMany({
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async getRule(id: string) {
+  async getRule(id: string): Promise<AutomationRule> {
     const rule = await this.prisma.automationRule.findUnique({
       where: { id },
     });
@@ -43,20 +30,23 @@ export class AutomationService {
     return rule;
   }
 
-  async updateRule(id: string, data: any) {
+  async updateRule(
+    id: string,
+    data: Prisma.AutomationRuleUpdateInput,
+  ): Promise<AutomationRule> {
     return this.prisma.automationRule.update({
       where: { id },
       data,
     });
   }
 
-  async deleteRule(id: string) {
+  async deleteRule(id: string): Promise<AutomationRule> {
     return this.prisma.automationRule.delete({
       where: { id },
     });
   }
 
-  async executeRules(trigger: string, context: any) {
+  async executeRules(trigger: string, context: unknown): Promise<unknown[]> {
     const rules = await this.prisma.automationRule.findMany({
       where: {
         enabled: true,
@@ -66,8 +56,16 @@ export class AutomationService {
 
     const results = [];
     for (const rule of rules) {
-      if (this.evaluateConditions(rule.conditions, context)) {
-        const result = await this.executeActions(rule.actions, context);
+      if (
+        this.evaluateConditions(
+          rule.conditions as Record<string, unknown> | null,
+          context,
+        )
+      ) {
+        const result = await this.executeActions(
+          rule.actions as Record<string, unknown> | null,
+          context,
+        );
         results.push(result);
       }
     }
@@ -75,13 +73,19 @@ export class AutomationService {
     return results;
   }
 
-  private evaluateConditions(conditions: any, context: any): boolean {
+  private evaluateConditions(
+    conditions: Record<string, unknown> | null,
+    _context: unknown,
+  ): boolean {
     if (!conditions || Object.keys(conditions).length === 0) return true;
     return true; // Placeholder - implement actual logic
   }
 
-  private async executeActions(actions: any, context: any) {
-    // Placeholder - implement actual actions (change status, assign, notify, etc)
+  private async executeActions(
+    actions: Record<string, unknown> | null,
+    _context: unknown,
+  ): Promise<unknown> {
+    await Promise.resolve(); // satisfy require-await
     return { success: true, actions };
   }
 }

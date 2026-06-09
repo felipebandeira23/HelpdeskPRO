@@ -46,6 +46,34 @@ const settingsCards = [
     description: 'Customização visual e White-label',
     color: 'text-indigo-500',
   },
+  {
+    href: '/settings/notifications',
+    icon: '🔔',
+    title: 'Notificações & Webhooks',
+    description: 'Alertas por email, canais Microsoft Teams, Slack e webhooks de eventos',
+    color: 'text-yellow-500',
+  },
+  {
+    href: '/settings/cron',
+    icon: '⚙️',
+    title: 'Ações Automáticas (Cron)',
+    description: 'Gerenciamento de tarefas em segundo plano, expirações automáticas e limpezas',
+    color: 'text-indigo-400',
+  },
+  {
+    href: '/settings/integrations',
+    icon: '🔗',
+    title: 'Links Externos & OAuth',
+    description: 'Clientes OAuth 2.0, chaves de API e conexões com sistemas externos',
+    color: 'text-teal-400',
+  },
+  {
+    href: '/settings/assets',
+    icon: '🔌',
+    title: 'Definições de Ativos',
+    description: 'Gerenciamento de tipos de hardware, marcas, SOs e regras de unicidade',
+    color: 'text-rose-400',
+  },
 ];
 
 export default function SettingsPage() {

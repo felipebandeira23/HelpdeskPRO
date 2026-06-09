@@ -8,24 +8,24 @@ export class WhatsappController {
   @Post('send')
   sendMessage(
     @Body() data: { to: string; message: string; ticketId?: string },
-  ) {
+  ): Promise<unknown> {
     return this.service.sendMessage(data.to, data.message, data.ticketId);
   }
 
   @Get('conversations')
-  getConversations(@Query('phone') phone?: string) {
+  getConversations(@Query('phone') phone?: string): Promise<unknown> {
     return this.service.getConversations(phone);
   }
 
   @Post('link')
   linkPhoneToTicket(
     @Body() data: { ticketId: string; phoneNumber: string },
-  ) {
+  ): Promise<unknown> {
     return this.service.linkPhoneToTicket(data.ticketId, data.phoneNumber);
   }
 
   @Get('webhook')
-  getWebhookStatus() {
+  getWebhookStatus(): Promise<unknown> {
     return this.service.getWebhookStatus();
   }
 }

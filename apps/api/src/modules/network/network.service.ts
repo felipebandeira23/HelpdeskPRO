@@ -12,7 +12,8 @@ interface NetworkDevice {
 
 @Injectable()
 export class NetworkService {
-  async getNetworkTopology() {
+  async getNetworkTopology(): Promise<unknown> {
+    await Promise.resolve();
     return {
       devices: [
         {
@@ -48,10 +49,11 @@ export class NetworkService {
   }
 
   async getDeviceStatus(deviceId: string): Promise<NetworkDevice> {
+    await Promise.resolve();
     return {
       id: deviceId,
       hostname: 'device-' + deviceId,
-      ip: `192.168.1.${Math.random() * 255 | 0}`,
+      ip: `192.168.1.${(Math.random() * 255) | 0}`,
       type: 'router',
       status: 'online',
       latency: Math.random() * 100,
@@ -59,7 +61,8 @@ export class NetworkService {
     };
   }
 
-  async getNetworkStats() {
+  async getNetworkStats(): Promise<unknown> {
+    await Promise.resolve();
     return {
       totalDevices: 42,
       onlineDevices: 40,
@@ -73,7 +76,8 @@ export class NetworkService {
     };
   }
 
-  async getAlerts(limit: number = 10) {
+  async getAlerts(limit: number = 10): Promise<unknown> {
+    await Promise.resolve(limit);
     return {
       total: 5,
       alerts: [
@@ -102,7 +106,8 @@ export class NetworkService {
     metric: string;
     threshold: number;
     action: string;
-  }) {
+  }): Promise<unknown> {
+    await Promise.resolve();
     return {
       ruleId: `rule-${Date.now()}`,
       ...data,
@@ -111,7 +116,8 @@ export class NetworkService {
     };
   }
 
-  async testConnectivity(targetIp: string) {
+  async testConnectivity(targetIp: string): Promise<unknown> {
+    await Promise.resolve();
     return {
       target: targetIp,
       reachable: true,

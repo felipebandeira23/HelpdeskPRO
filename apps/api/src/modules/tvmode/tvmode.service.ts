@@ -1,13 +1,30 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
+interface Panel {
+  id: string;
+  type: string;
+  position: { x: number; y: number; w: number; h: number };
+  title: string;
+  refreshInterval: number;
+}
+
+interface DashboardLayout {
+  layoutId: string;
+  panels: Panel[];
+  autoRefresh: boolean;
+  refreshInterval: number;
+  fullscreen: boolean;
+  hideHeader: boolean;
+}
+
 @Injectable()
 export class TVModeService {
   constructor(private prisma: PrismaService) {}
 
-  async getDashboardLayout(layoutId?: string) {
+  getDashboardLayout(layoutId?: string): DashboardLayout {
     return {
-      layoutId: layoutId || 'default',
+      layoutId: layoutId ?? 'default',
       panels: [
         {
           id: 'panel-1',
@@ -38,7 +55,7 @@ export class TVModeService {
     };
   }
 
-  async getMetricsPanel() {
+  getMetricsPanel(): Record<string, number> {
     const totalTickets = 250;
     const openTickets = 45;
     const avgResolutionTime = 4.5;
@@ -54,7 +71,7 @@ export class TVModeService {
     };
   }
 
-  async getSLAPanelStatus() {
+  getSLAPanelStatus(): Record<string, unknown> {
     return {
       ok: 180,
       warning: 35,
@@ -67,7 +84,7 @@ export class TVModeService {
     };
   }
 
-  async getTicketsList(limit: number = 20) {
+  getTicketsList(limit: number = 20): Record<string, unknown> {
     return {
       total: 45,
       limit,
@@ -76,12 +93,12 @@ export class TVModeService {
         title: `Ticket #${i + 1}`,
         status: ['OPEN', 'IN_PROGRESS'][i % 2],
         priority: ['HIGH', 'MEDIUM', 'LOW'][i % 3],
-        wait: `${Math.random() * 100 | 0}h ago`,
+        wait: `${(Math.random() * 100) | 0}h ago`,
       })),
     };
   }
 
-  async createCustomLayout(name: string, panels: any[]) {
+  createCustomLayout(name: string, panels: Panel[]): Record<string, unknown> {
     return {
       layoutId: `layout-${Date.now()}`,
       name,
@@ -91,7 +108,7 @@ export class TVModeService {
     };
   }
 
-  async scheduleLayoutRotation(layouts: string[], interval: number) {
+  scheduleLayoutRotation(layouts: string[], interval: number): Record<string, unknown> {
     return {
       rotationId: `rotation-${Date.now()}`,
       layouts,

@@ -74,13 +74,19 @@ export class UsersService {
       active?: boolean;
     },
   ) {
-    const payload: any = { ...data };
+    let hashedPassword: string | undefined;
     if (data.password) {
-      payload.password = await bcrypt.hash(data.password, 12);
+      hashedPassword = await bcrypt.hash(data.password, 12);
     }
     return this.prisma.user.update({
       where: { id },
-      data: payload,
+      data: {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.email !== undefined && { email: data.email }),
+        ...(data.role !== undefined && { role: data.role }),
+        ...(data.active !== undefined && { active: data.active }),
+        ...(hashedPassword !== undefined && { password: hashedPassword }),
+      },
       select: safeSelect,
     });
   }

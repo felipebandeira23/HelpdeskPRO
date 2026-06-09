@@ -1,11 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { ChecklistItemStatus, Checklist, ChecklistItem } from '@prisma/client';
+
+export interface ChecklistWithItems extends Checklist {
+  items: ChecklistItem[];
+}
 
 @Injectable()
 export class ChecklistsService {
   constructor(private prisma: PrismaService) {}
 
-  async createChecklist(ticketId: string, items?: { title: string; description?: string }[]) {
+  async createChecklist(
+    ticketId: string,
+    items?: { title: string; description?: string }[],
+  ): Promise<ChecklistWithItems> {
     await this.prisma.ticket.findUniqueOrThrow({
       where: { id: ticketId },
     });
@@ -14,11 +22,12 @@ export class ChecklistsService {
       data: {
         ticketId,
         items: {
-          create: items?.map((item, index) => ({
-            title: item.title,
-            description: item.description,
-            order: index,
-          })) || [],
+          create:
+            items?.map((item, index) => ({
+              title: item.title,
+              description: item.description,
+              order: index,
+            })) || [],
         },
       },
       include: { items: true },
@@ -27,7 +36,7 @@ export class ChecklistsService {
     return checklist;
   }
 
-  async getChecklist(ticketId: string) {
+  async getChecklist(ticketId: string): Promise<unknown> {
     const checklist = await this.prisma.checklist.findUnique({
       where: { ticketId },
       include: {
@@ -48,7 +57,7 @@ export class ChecklistsService {
     ticketId: string,
     title: string,
     description?: string,
-  ) {
+  ): Promise<ChecklistItem> {
     const checklist = await this.prisma.checklist.findUnique({
       where: { ticketId },
     });
@@ -72,7 +81,10 @@ export class ChecklistsService {
     });
   }
 
-  async updateChecklistItem(itemId: string, status: string) {
+  async updateChecklistItem(
+    itemId: string,
+    status: string,
+  ): Promise<ChecklistItem> {
     const item = await this.prisma.checklistItem.findUnique({
       where: { id: itemId },
     });
@@ -86,22 +98,22 @@ export class ChecklistsService {
     return this.prisma.checklistItem.update({
       where: { id: itemId },
       data: {
-        status: status as any,
+        status: status as ChecklistItemStatus,
         completedAt,
       },
     });
   }
 
-  async deleteChecklistItem(itemId: string) {
+  async deleteChecklistItem(itemId: string): Promise<ChecklistItem> {
     return this.prisma.checklistItem.delete({
       where: { id: itemId },
     });
   }
 
-  private calculateProgress(checklist: any) {
+  private calculateProgress(checklist: ChecklistWithItems) {
     const total = checklist.items.length;
     const completed = checklist.items.filter(
-      (item: any) => item.status === 'COMPLETED',
+      (item) => item.status === ChecklistItemStatus.COMPLETED,
     ).length;
 
     return {

@@ -6,13 +6,13 @@ import {
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
-import { Ticket } from '@prisma/client';
+import { Ticket, TicketStatus, TicketPriority, Prisma, TicketFollowup } from '@prisma/client';
 
 interface ListOptions {
   skip?: number;
   take?: number;
-  status?: string;
-  priority?: string;
+  status?: TicketStatus;
+  priority?: TicketPriority;
 }
 
 @Injectable()
@@ -25,9 +25,10 @@ export class TicketsService {
         title: dto.title,
         description: dto.description,
         priority: dto.priority || 'MEDIUM',
-        requesterId: userId,
+        requesterId: dto.requesterId || userId,
         groupId: dto.groupId,
         assetId: dto.assetId,
+        assignedToId: dto.assignedToId,
       },
       include: {
         requester: true,
@@ -38,10 +39,13 @@ export class TicketsService {
     });
   }
 
-  async findAll(options: ListOptions = {}) {
+  async findAll(options: ListOptions = {}): Promise<{
+    data: Ticket[];
+    pagination: { total: number; skip: number; take: number; hasMore: boolean };
+  }> {
     const { skip = 0, take = 20, status, priority } = options;
 
-    const where: any = {};
+    const where: Prisma.TicketWhereInput = {};
     if (status) where.status = status;
     if (priority) where.priority = priority;
 
@@ -72,7 +76,7 @@ export class TicketsService {
     };
   }
 
-  async findById(id: string) {
+  async findById(id: string): Promise<Ticket> {
     const ticket = await this.prisma.ticket.findUnique({
       where: { id },
       include: {
@@ -118,7 +122,7 @@ export class TicketsService {
     });
   }
 
-  async delete(id: string) {
+  async delete(id: string): Promise<{ message: string }> {
     await this.findById(id);
     await this.prisma.ticket.delete({ where: { id } });
     return { message: 'Ticket deletado com sucesso' };
@@ -129,7 +133,7 @@ export class TicketsService {
     authorId: string,
     message: string,
     isInternal: boolean = false,
-  ) {
+  ): Promise<TicketFollowup> {
     await this.findById(ticketId);
 
     return this.prisma.ticketFollowup.create({

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { SLA } from '@prisma/client';
 
 @Injectable()
 export class SLAService {
@@ -68,13 +69,14 @@ export class SLAService {
     return slas.map((sla) => this.calculateStatus(sla));
   }
 
-  private calculateStatus(sla: any) {
+  private calculateStatus(sla: SLA): Record<string, unknown> {
     const now = new Date();
 
-    const getStatus = (dueDate: Date | null) => {
+    const getStatus = (dueDate: Date | null): string => {
       if (!dueDate) return 'OK';
       const timeLeft = dueDate.getTime() - now.getTime();
-      const percentage = (timeLeft / (dueDate.getTime() - new Date(sla.createdAt).getTime())) * 100;
+      const createdMs = sla.createdAt instanceof Date ? sla.createdAt.getTime() : new Date(sla.createdAt).getTime();
+      const percentage = (timeLeft / (dueDate.getTime() - createdMs)) * 100;
 
       if (timeLeft < 0) return 'BREACHED';
       if (percentage < 25) return 'WARNING';

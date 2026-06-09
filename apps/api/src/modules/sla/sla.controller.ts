@@ -9,7 +9,7 @@ export class SLAController {
   async createOrUpdateSLA(
     @Param('ticketId') ticketId: string,
     @Body() data: { responseTimeMinutes?: number; solutionTimeMinutes?: number },
-  ) {
+  ): Promise<unknown> {
     return this.slaService.createOrUpdateSLA(
       ticketId,
       data.responseTimeMinutes,
@@ -18,12 +18,12 @@ export class SLAController {
   }
 
   @Get(':ticketId')
-  async getSLA(@Param('ticketId') ticketId: string) {
+  async getSLA(@Param('ticketId') ticketId: string): Promise<unknown> {
     return this.slaService.getSLA(ticketId);
   }
 
   @Get()
-  async listBreachedSLAs() {
+  async listBreachedSLAs(): Promise<unknown[]> {
     return this.slaService.listBreachedSLAs();
   }
 }

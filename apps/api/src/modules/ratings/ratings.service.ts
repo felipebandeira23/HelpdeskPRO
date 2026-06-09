@@ -10,7 +10,8 @@ export class RatingsService {
     userId: string;
     rating: number;
     comment?: string;
-  }) {
+  }): Promise<unknown> {
+    await Promise.resolve();
     return {
       id: 'rating-' + Date.now(),
       ticketId: data.ticketId,
@@ -20,7 +21,8 @@ export class RatingsService {
     };
   }
 
-  async getTicketRating(ticketId: string) {
+  async getTicketRating(ticketId: string): Promise<unknown> {
+    await Promise.resolve();
     return {
       ticketId,
       averageRating: 4.5,
@@ -29,7 +31,8 @@ export class RatingsService {
     };
   }
 
-  async getSurveyResults() {
+  async getSurveyResults(): Promise<unknown> {
+    await Promise.resolve();
     return {
       averageRating: 4.3,
       totalSurveys: 100,

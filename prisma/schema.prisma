@@ -102,8 +102,9 @@ model GroupMember {
 }
 
 model Ticket {
-  id          String   @id @default(cuid())
-  title       String
+  id           String   @id @default(cuid())
+  ticketNumber Int      @unique @default(autoincrement())
+  title        String
   description String
   status      TicketStatus @default(OPEN)
   priority    TicketPriority @default(MEDIUM)

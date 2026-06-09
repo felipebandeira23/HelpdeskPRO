@@ -4,15 +4,24 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { CreateTicketModal } from '@/components/CreateTicketModal';
 
 export function TopBar() {
   const [showMenu, setShowMenu] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const { user, logout } = useAuth();
   const router = useRouter();
 
   const handleLogout = () => {
     logout();
     router.push('/auth/login');
+  };
+
+  const handleCreateSuccess = () => {
+    setShowCreateModal(false);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('ticket-created'));
+    }
   };
 
   if (!user) {
@@ -52,7 +61,10 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-4">
-        <button className="hidden sm:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="hidden sm:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        >
           <span>+</span>
           Novo Ticket
         </button>
@@ -90,6 +102,12 @@ export function TopBar() {
           )}
         </button>
       </div>
+      {showCreateModal && (
+        <CreateTicketModal
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={handleCreateSuccess}
+        />
+      )}
     </header>
   );
 }

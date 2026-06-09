@@ -5,7 +5,11 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 export class ReportsService {
   constructor(private prisma: PrismaService) {}
 
-  async generateReport(type: string, dateRange: { from: Date; to: Date }) {
+  async generateReport(
+    type: string,
+    dateRange: { from: Date; to: Date },
+  ): Promise<unknown> {
+    await Promise.resolve();
     return {
       type,
       dateRange,
@@ -19,11 +23,16 @@ export class ReportsService {
     };
   }
 
-  async getReportHistory(userId: string) {
+  async getReportHistory(_userId: string): Promise<unknown[]> {
+    await Promise.resolve();
     return [];
   }
 
-  async exportReport(reportId: string, format: 'pdf' | 'csv' | 'xlsx') {
+  async exportReport(
+    reportId: string,
+    format: 'pdf' | 'csv' | 'xlsx',
+  ): Promise<unknown> {
+    await Promise.resolve();
     return { reportId, format, url: `/exports/${reportId}.${format}` };
   }
 }

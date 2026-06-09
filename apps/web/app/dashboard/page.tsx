@@ -86,10 +86,12 @@ export default function DashboardPage() {
 
       if (statsData.status === 'fulfilled') setStats(statsData.value);
       if (metricsData.status === 'fulfilled') setMetrics(metricsData.value);
-      if (ticketsData.status === 'fulfilled')
+      if (ticketsData.status === 'fulfilled') {
+        const val = ticketsData.value as any;
         setRecentTickets(
-          Array.isArray(ticketsData.value) ? ticketsData.value : [],
+          Array.isArray(val) ? val : (val && Array.isArray(val.data) ? val.data : [])
         );
+      }
       if (breachedData.status === 'fulfilled')
         setBreached(Array.isArray(breachedData.value) ? breachedData.value : []);
       if (warningData.status === 'fulfilled')
@@ -134,7 +136,7 @@ export default function DashboardPage() {
       <PageHeader title="Dashboard" subtitle="Visão geral em tempo real" />
 
       {/* Cards de métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Tickets Abertos"
           value={stats?.ticketsOpen ?? 0}

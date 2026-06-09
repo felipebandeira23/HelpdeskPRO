@@ -36,7 +36,14 @@ export class TicketTypesService {
     return type;
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: {
+    name?: string;
+    icon?: string;
+    color?: string;
+    description?: string;
+    slaResponseTime?: number;
+    slaSolutionTime?: number;
+  }) {
     return this.prisma.ticketType.update({
       where: { id },
       data,

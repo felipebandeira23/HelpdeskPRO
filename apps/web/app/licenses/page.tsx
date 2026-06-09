@@ -11,6 +11,21 @@ export default function LicensesPage() {
     { id: '4', software: 'SPSS Statistics', type: 'Chave Perpétua (Acadêmica)', purchased: 40, installed: 22, expireAt: null, status: 'OK' },
   ];
 
+  const totalPurchased = licenses.reduce((acc, l) => acc + l.purchased, 0);
+  const totalInstalled = licenses.reduce((acc, l) => acc + l.installed, 0);
+
+  // Only sum positive balances
+  const totalAvailable = licenses.reduce((acc, l) => {
+    const diff = l.purchased - l.installed;
+    return diff > 0 ? acc + diff : acc;
+  }, 0);
+
+  // Sum negative balances (where installed > purchased)
+  const totalExceeded = licenses.reduce((acc, l) => {
+    const diff = l.installed - l.purchased;
+    return diff > 0 ? acc + diff : acc;
+  }, 0);
+
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
@@ -21,10 +36,10 @@ export default function LicensesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <StatCard title="Total de Licenças" value="505" icon="🔑" accent="bg-blue-600" />
-        <StatCard title="Em Uso" value="489" icon="💻" accent="bg-purple-600" />
-        <StatCard title="Disponíveis" value="16" icon="✅" accent="bg-emerald-600" />
-        <StatCard title="Irregulares (Excedidas)" value="10" icon="⚠️" accent="bg-red-600" />
+        <StatCard title="Total de Licenças" value={totalPurchased} icon="🔑" accent="bg-blue-600" />
+        <StatCard title="Em Uso" value={totalInstalled} icon="💻" accent="bg-purple-600" />
+        <StatCard title="Disponíveis" value={totalAvailable} icon="✅" accent="bg-emerald-600" />
+        <StatCard title="Irregulares (Excedidas)" value={totalExceeded} icon="⚠️" accent="bg-red-600" />
       </div>
 
       <Panel>
