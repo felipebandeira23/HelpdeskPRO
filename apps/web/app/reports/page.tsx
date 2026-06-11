@@ -1,93 +1,266 @@
 'use client';
-import { PageHeader, Panel, StatCard, Button } from '@/components/ui';
+import { useState, useEffect, useCallback } from 'react';
+import { api } from '@/lib/api';
+import {
+  PageHeader,
+  Panel,
+  StatCard,
+  Select,
+  Spinner,
+  ErrorBanner,
+  STATUS_LABELS,
+  PRIORITY_LABELS,
+} from '@/components/ui';
+
+type Period = '7d' | '30d' | '90d';
+
+interface Overview {
+  totalTickets: number;
+  resolvedTickets: number;
+  openTickets: number;
+  averageResolutionHours: number | null;
+}
+
+interface GroupRow {
+  key?: string;
+  name?: string;
+  count?: number;
+  assigned?: number;
+  resolved?: number;
+}
+
+interface SlaReport {
+  totalWithSla: number;
+  response: { total: number; onTime: number; complianceRate: number | null };
+  solution: { total: number; onTime: number; complianceRate: number | null };
+  currentlyBreached: number;
+}
+
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Panel>
+      <h2 className="text-white font-semibold mb-4">{title}</h2>
+      {children}
+    </Panel>
+  );
+}
+
+function periodToRange(period: Period): { from: string; to: string } {
+  const to = new Date();
+  const from = new Date();
+  from.setDate(from.getDate() - (period === '7d' ? 7 : period === '30d' ? 30 : 90));
+  return { from: from.toISOString(), to: to.toISOString() };
+}
 
 export default function ReportsPage() {
+  const [period, setPeriod] = useState<Period>('30d');
+  const [overview, setOverview] = useState<Overview | null>(null);
+  const [byStatus, setByStatus] = useState<GroupRow[]>([]);
+  const [byPriority, setByPriority] = useState<GroupRow[]>([]);
+  const [byCategory, setByCategory] = useState<GroupRow[]>([]);
+  const [byOperator, setByOperator] = useState<GroupRow[]>([]);
+  const [sla, setSla] = useState<SlaReport | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const { from, to } = periodToRange(period);
+    const q = `from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+    try {
+      const [ov, st, pr, cat, op, slaR] = await Promise.all([
+        api.get(`/api/reports?type=overview&${q}`),
+        api.get(`/api/reports?type=by-status&${q}`),
+        api.get(`/api/reports?type=by-priority&${q}`),
+        api.get(`/api/reports?type=by-category&${q}`),
+        api.get(`/api/reports?type=by-operator&${q}`),
+        api.get(`/api/reports?type=sla&${q}`),
+      ]);
+      setOverview(ov.data);
+      setByStatus(st.data.groups || []);
+      setByPriority(pr.data.groups || []);
+      setByCategory(cat.data.groups || []);
+      setByOperator(op.data.groups || []);
+      setSla(slaR.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao gerar relatórios');
+    } finally {
+      setLoading(false);
+    }
+  }, [period]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const maxCount = (rows: GroupRow[]): number =>
+    Math.max(1, ...rows.map((r) => r.count ?? r.assigned ?? 0));
+
+  const Bar = ({ value, max }: { value: number; max: number }) => (
+    <div className="flex-1 bg-slate-800 h-2 rounded-full overflow-hidden">
+      <div
+        className="bg-blue-500 h-full rounded-full"
+        style={{ width: `${Math.round((value / max) * 100)}%` }}
+      />
+    </div>
+  );
+
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <PageHeader title="Relatórios e Analytics" subtitle="Métricas de atendimento, SLA e produtividade" />
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm">Exportar CSV</Button>
-          <Button variant="danger" size="sm">Exportar PDF</Button>
+    <div className="p-8 space-y-6">
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <PageHeader
+          title="Relatórios e Analytics"
+          subtitle="Métricas reais de atendimento, SLA e produtividade"
+        />
+        <div className="w-48">
+          <Select value={period} onChange={(e) => setPeriod(e.target.value as Period)}>
+            <option value="7d">Últimos 7 dias</option>
+            <option value="30d">Últimos 30 dias</option>
+            <option value="90d">Últimos 90 dias</option>
+          </Select>
         </div>
       </div>
 
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-6 flex flex-wrap gap-4 items-end">
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Período</label>
-          <select className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white outline-none focus:border-blue-500">
-            <option>Últimos 7 dias</option>
-            <option>Este Mês</option>
-            <option>Mês Anterior</option>
-            <option>Personalizado...</option>
-          </select>
-        </div>
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Cliente</label>
-          <select className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white outline-none focus:border-blue-500">
-            <option>Todos os Clientes</option>
-            <option>TechCorp</option>
-            <option>Global Inc</option>
-          </select>
-        </div>
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Técnico/Mesa</label>
-          <select className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white outline-none focus:border-blue-500">
-            <option>Todos</option>
-            <option>N1 - Suporte Básico</option>
-            <option>N2 - Infraestrutura</option>
-          </select>
-        </div>
-        <Button variant="primary">Aplicar Filtros</Button>
-      </div>
+      {error && <ErrorBanner message={error} />}
+      {loading ? (
+        <Spinner label="Gerando relatórios..." />
+      ) : (
+        <>
+          {/* Visão geral */}
+          {overview && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <StatCard title="Total de tickets" icon="🎫" value={String(overview.totalTickets)} />
+              <StatCard title="Resolvidos" icon="✅" value={String(overview.resolvedTickets)} />
+              <StatCard title="Em aberto" icon="📬" value={String(overview.openTickets)} />
+              <StatCard
+                title="Tempo médio de resolução"
+                icon="⏱️"
+                value={
+                  overview.averageResolutionHours != null
+                    ? `${overview.averageResolutionHours}h`
+                    : '—'
+                }
+              />
+            </div>
+          )}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <StatCard title="Tickets Resolvidos" value="142" icon="✅" accent="bg-green-600" />
-        <StatCard title="SLA Cumprido" value="94%" icon="🎯" accent="bg-blue-600" />
-        <StatCard title="Tempo Médio Resposta" value="15m" icon="⏱️" accent="bg-amber-500" />
-        <StatCard title="Tempo Médio Solução" value="2h 10m" icon="🛠️" accent="bg-purple-500" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Panel>
-          <h2 className="text-lg font-bold text-white mb-4">Evolução de Chamados</h2>
-          <div className="h-64 flex items-end gap-2 pt-8 border-b border-l border-slate-700 pl-2 pb-2 relative">
-            <div className="absolute top-0 left-2 text-xs text-slate-500">Vol.</div>
-            <div className="absolute bottom-2 -left-6 text-xs text-slate-500">0</div>
-            {[40, 60, 45, 80, 50, 90, 70].map((h, i) => (
-              <div key={i} className="flex-1 bg-blue-600/80 hover:bg-blue-500 transition-colors rounded-t-sm relative group cursor-pointer" style={{ height: `${h}%` }}>
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">{h} tickets</div>
+          {/* SLA */}
+          {sla && (
+            <Section title="Cumprimento de SLA">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <StatCard
+                  title="Resposta no prazo"
+                  icon="⚡"
+                  value={
+                    sla.response.complianceRate != null
+                      ? `${sla.response.complianceRate}%`
+                      : '—'
+                  }
+                />
+                <StatCard
+                  title="Solução no prazo"
+                  icon="🛠️"
+                  value={
+                    sla.solution.complianceRate != null
+                      ? `${sla.solution.complianceRate}%`
+                      : '—'
+                  }
+                />
+                <StatCard title="Tickets com SLA" icon="📋" value={String(sla.totalWithSla)} />
+                <StatCard title="Estourados agora" icon="🔴" value={String(sla.currentlyBreached)} />
               </div>
-            ))}
-          </div>
-          <div className="flex justify-between text-xs text-slate-500 mt-2 px-2">
-            <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sab</span><span>Dom</span>
-          </div>
-        </Panel>
+            </Section>
+          )}
 
-        <Panel>
-          <h2 className="text-lg font-bold text-white mb-4">Tickets por Técnico (Top 5)</h2>
-          <div className="space-y-4">
-            {[
-              { name: 'João Silva', count: 45, color: 'bg-blue-500' },
-              { name: 'Maria Souza', count: 38, color: 'bg-green-500' },
-              { name: 'Carlos Santos', count: 25, color: 'bg-yellow-500' },
-              { name: 'Ana Lima', count: 18, color: 'bg-purple-500' },
-              { name: 'Pedro Costa', count: 16, color: 'bg-orange-500' },
-            ].map(t => (
-              <div key={t.name}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-slate-300">{t.name}</span>
-                  <span className="text-white font-bold">{t.count}</span>
-                </div>
-                <div className="w-full bg-slate-800 rounded-full h-2">
-                  <div className={`${t.color} h-2 rounded-full`} style={{ width: `${(t.count / 45) * 100}%` }}></div>
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Section title="Tickets por status">
+              <div className="space-y-3">
+                {byStatus.map((r) => (
+                  <div key={r.key} className="flex items-center gap-3 text-sm">
+                    <span className="w-32 text-slate-300">
+                      {STATUS_LABELS[r.key || ''] || r.key}
+                    </span>
+                    <Bar value={r.count || 0} max={maxCount(byStatus)} />
+                    <span className="w-8 text-right text-slate-200 font-mono">
+                      {r.count}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
+            </Section>
+
+            <Section title="Tickets por prioridade">
+              <div className="space-y-3">
+                {byPriority.map((r) => (
+                  <div key={r.key} className="flex items-center gap-3 text-sm">
+                    <span className="w-32 text-slate-300">
+                      {PRIORITY_LABELS[r.key || ''] || r.key}
+                    </span>
+                    <Bar value={r.count || 0} max={maxCount(byPriority)} />
+                    <span className="w-8 text-right text-slate-200 font-mono">
+                      {r.count}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Section>
+
+            <Section title="Tickets por categoria">
+              <div className="space-y-3">
+                {byCategory.length === 0 ? (
+                  <p className="text-slate-400 text-sm">Sem dados no período.</p>
+                ) : (
+                  byCategory.map((r, i) => (
+                    <div key={i} className="flex items-center gap-3 text-sm">
+                      <span className="w-40 text-slate-300 truncate">{r.name}</span>
+                      <Bar value={r.count || 0} max={maxCount(byCategory)} />
+                      <span className="w-8 text-right text-slate-200 font-mono">
+                        {r.count}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Section>
+
+            <Section title="Produtividade por operador">
+              {byOperator.length === 0 ? (
+                <p className="text-slate-400 text-sm">Sem dados no período.</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-slate-400 border-b border-slate-700">
+                      <th className="py-2">Operador</th>
+                      <th className="py-2 text-right">Atribuídos</th>
+                      <th className="py-2 text-right">Resolvidos</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {byOperator.map((r, i) => (
+                      <tr key={i} className="border-b border-slate-800">
+                        <td className="py-2 text-slate-200">{r.name}</td>
+                        <td className="py-2 text-right text-slate-200 font-mono">
+                          {r.assigned}
+                        </td>
+                        <td className="py-2 text-right text-green-400 font-mono">
+                          {r.resolved}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </Section>
           </div>
-        </Panel>
-      </div>
+        </>
+      )}
     </div>
   );
 }

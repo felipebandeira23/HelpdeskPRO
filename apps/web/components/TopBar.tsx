@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { CreateTicketModal } from '@/components/CreateTicketModal';
+import { NotificationsBell } from '@/components/NotificationsBell';
 
 export function TopBar() {
   const [showMenu, setShowMenu] = useState(false);
@@ -73,6 +74,8 @@ export function TopBar() {
           <span>+</span>
           Nova Tarefa
         </button>
+
+        <NotificationsBell />
 
         <button
           onClick={() => setShowMenu(!showMenu)}

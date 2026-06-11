@@ -1,143 +1,272 @@
 'use client';
-import { useState } from 'react';
-import { PageHeader, Panel, StatCard } from '@/components/ui';
+import { useState, useEffect, useCallback } from 'react';
+import { api } from '@/lib/api';
+import {
+  PageHeader,
+  Section,
+  Button,
+  Modal,
+  Field,
+  Input,
+  Select,
+  Textarea,
+  ErrorBanner,
+  Skeleton,
+  EmptyState,
+} from '@/components/ui';
+
+interface Customer {
+  id: string;
+  name: string;
+  document: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  contractStatus: 'NONE' | 'ACTIVE' | 'EXPIRING' | 'OVERDUE';
+  notes: string | null;
+}
+
+const CONTRACT_BADGE: Record<string, { label: string; cls: string }> = {
+  ACTIVE: { label: 'Contrato ativo', cls: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+  EXPIRING: { label: 'Prestes a vencer', cls: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+  OVERDUE: { label: 'Inadimplente', cls: 'bg-red-500/15 text-red-400 border-red-500/30' },
+  NONE: { label: 'Sem contrato', cls: 'bg-slate-500/15 text-slate-400 border-slate-500/30' },
+};
+
+const EMPTY_FORM = {
+  name: '',
+  document: '',
+  email: '',
+  phone: '',
+  address: '',
+  contractStatus: 'NONE',
+  notes: '',
+};
 
 export default function CustomersPage() {
-  const [selectedCustomer, setSelectedCustomer] = useState<number | null>(1);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Customer | null>(null);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
 
-  const customers = [
-    { id: 1, name: 'TechCorp Industries', email: 'contato@techcorp.com', contractStatus: 'Ativo', sla: '98%', tickets: 45, hoursUsed: 35, hoursTotal: 40 },
-    { id: 2, name: 'Global Inc', email: 'suporte@globalinc.net', contractStatus: 'Ativo', sla: '92%', tickets: 112, hoursUsed: 45, hoursTotal: 40 },
-    { id: 3, name: 'Local Shop', email: 'gerencia@localshop.com', contractStatus: 'Inadimplente', sla: '85%', tickets: 12, hoursUsed: 5, hoursTotal: 0 },
-    { id: 4, name: 'Studio Design', email: 'art@studiodesign.co', contractStatus: 'S/ Contrato', sla: '100%', tickets: 3, hoursUsed: 2, hoursTotal: 0 },
-  ];
+  const load = useCallback(async () => {
+    setError(null);
+    try {
+      const data = await api.get<Customer[]>('/api/customers');
+      setCustomers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar clientes');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const c = customers.find(x => x.id === selectedCustomer);
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm(EMPTY_FORM);
+    setModalOpen(true);
+  };
+
+  const openEdit = (c: Customer) => {
+    setEditing(c);
+    setForm({
+      name: c.name,
+      document: c.document || '',
+      email: c.email || '',
+      phone: c.phone || '',
+      address: c.address || '',
+      contractStatus: c.contractStatus,
+      notes: c.notes || '',
+    });
+    setModalOpen(true);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const payload = {
+        name: form.name,
+        document: form.document || null,
+        email: form.email || null,
+        phone: form.phone || null,
+        address: form.address || null,
+        contractStatus: form.contractStatus,
+        notes: form.notes || null,
+      };
+      if (editing) {
+        await api.patch(`/api/customers/${editing.id}`, payload);
+      } else {
+        await api.post('/api/customers', payload);
+      }
+      setModalOpen(false);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar cliente');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async (c: Customer) => {
+    if (!confirm(`Excluir o cliente "${c.name}"?`)) return;
+    try {
+      await api.delete(`/api/customers/${c.id}`);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao excluir cliente');
+    }
+  };
 
   return (
-    <div className="p-8 h-full flex flex-col">
-      <div className="flex justify-between items-center mb-6">
-        <PageHeader title="Clientes e Organizações" subtitle="CRM e Perfil 360º de contas" />
-        <button className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium shadow-lg shadow-blue-500/20 transition-colors">
-          + Novo Cliente
-        </button>
-      </div>
+    <div className="p-6 space-y-6">
+      <PageHeader
+        title="Clientes"
+        subtitle="Empresas e solicitantes com contrato"
+        action={<Button onClick={openCreate}>+ Novo cliente</Button>}
+      />
 
-      <div className="flex-1 flex gap-6 min-h-0">
-        {/* Lista de Clientes */}
-        <div className="w-1/3 flex flex-col bg-slate-900 border border-slate-700 rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-slate-700 bg-slate-800/50">
-            <input type="text" placeholder="Buscar cliente..." className="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-white outline-none focus:border-blue-500" />
+      {error && <ErrorBanner message={error} />}
+
+      <Section title={`Cadastrados (${customers.length})`}>
+        {loading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-10" />
+            <Skeleton className="h-10" />
           </div>
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-700/50">
-            {customers.map(cust => (
-              <div 
-                key={cust.id} 
-                onClick={() => setSelectedCustomer(cust.id)}
-                className={`p-4 cursor-pointer transition-colors ${selectedCustomer === cust.id ? 'bg-blue-900/20 border-l-4 border-blue-500' : 'hover:bg-slate-800/50 border-l-4 border-transparent'}`}
-              >
-                <div className="flex justify-between items-start mb-1">
-                  <h3 className={`font-bold ${selectedCustomer === cust.id ? 'text-blue-400' : 'text-white'}`}>{cust.name}</h3>
-                  <span className={`text-[10px] uppercase px-2 py-0.5 rounded font-bold ${cust.contractStatus === 'Ativo' ? 'bg-green-900/30 text-green-400' : cust.contractStatus === 'Inadimplente' ? 'bg-red-900/30 text-red-400' : 'bg-slate-800 text-slate-400'}`}>
-                    {cust.contractStatus}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400">{cust.email}</p>
-              </div>
-            ))}
+        ) : customers.length === 0 ? (
+          <EmptyState
+            icon="🏢"
+            title="Nenhum cliente cadastrado"
+            description="Cadastre empresas para vincular tickets e contratos."
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-slate-400 text-xs uppercase border-b border-white/[0.06]">
+                  <th className="py-2 pr-4">Nome</th>
+                  <th className="py-2 pr-4">CNPJ/CPF</th>
+                  <th className="py-2 pr-4">Contato</th>
+                  <th className="py-2 pr-4">Contrato</th>
+                  <th className="py-2" />
+                </tr>
+              </thead>
+              <tbody>
+                {customers.map((c) => {
+                  const badge = CONTRACT_BADGE[c.contractStatus] || CONTRACT_BADGE.NONE;
+                  return (
+                    <tr
+                      key={c.id}
+                      className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors"
+                    >
+                      <td className="py-3 pr-4 text-slate-200 font-medium">{c.name}</td>
+                      <td className="py-3 pr-4 text-slate-300 tnum">{c.document || '—'}</td>
+                      <td className="py-3 pr-4 text-slate-300">
+                        {c.email || c.phone || '—'}
+                      </td>
+                      <td className="py-3 pr-4">
+                        <span className={`text-xs px-2 py-0.5 rounded border ${badge.cls}`}>
+                          {badge.label}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => openEdit(c)}
+                          className="text-blue-400 hover:text-blue-300 text-xs mr-3"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => remove(c)}
+                          className="text-red-400 hover:text-red-300 text-xs"
+                        >
+                          Excluir
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+        )}
+      </Section>
+
+      <Modal
+        open={modalOpen}
+        title={editing ? 'Editar cliente' : 'Novo cliente'}
+        onClose={() => setModalOpen(false)}
+      >
+        <Field label="Nome" required>
+          <Input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Empresa LTDA"
+          />
+        </Field>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="CNPJ/CPF">
+            <Input
+              value={form.document}
+              onChange={(e) => setForm({ ...form, document: e.target.value })}
+            />
+          </Field>
+          <Field label="Situação do contrato">
+            <Select
+              value={form.contractStatus}
+              onChange={(e) => setForm({ ...form, contractStatus: e.target.value })}
+            >
+              <option value="NONE">Sem contrato</option>
+              <option value="ACTIVE">Ativo</option>
+              <option value="EXPIRING">Prestes a vencer</option>
+              <option value="OVERDUE">Inadimplente</option>
+            </Select>
+          </Field>
+          <Field label="Email">
+            <Input
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
+          </Field>
+          <Field label="Telefone">
+            <Input
+              type="tel"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            />
+          </Field>
         </div>
-
-        {/* Perfil 360 */}
-        <div className="flex-1 overflow-y-auto">
-          {c ? (
-            <div className="space-y-6">
-              <Panel className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700">
-                <div className="flex items-center gap-6 mb-6">
-                  <div className="w-20 h-20 rounded-2xl bg-blue-600 flex items-center justify-center text-3xl text-white font-bold shadow-lg shadow-blue-500/20">
-                    {c.name.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <h2 className="text-3xl font-bold text-white mb-2">{c.name}</h2>
-                    <div className="flex gap-4 text-sm text-slate-400">
-                      <span>📧 {c.email}</span>
-                      <span>📱 (11) 9999-9999</span>
-                      <span>🏢 CNPJ: 00.000.000/0001-00</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-slate-950/50 p-4 rounded-lg border border-slate-800">
-                    <div className="text-slate-400 text-xs font-bold uppercase mb-1">SLA Global</div>
-                    <div className={`text-2xl font-bold ${parseInt(c.sla) >= 95 ? 'text-green-400' : parseInt(c.sla) >= 90 ? 'text-yellow-400' : 'text-red-400'}`}>{c.sla}</div>
-                  </div>
-                  <div className="bg-slate-950/50 p-4 rounded-lg border border-slate-800">
-                    <div className="text-slate-400 text-xs font-bold uppercase mb-1">Tickets (Total)</div>
-                    <div className="text-2xl font-bold text-white">{c.tickets}</div>
-                  </div>
-                  <div className="bg-slate-950/50 p-4 rounded-lg border border-slate-800">
-                    <div className="text-slate-400 text-xs font-bold uppercase mb-1">Ativos Monitorados</div>
-                    <div className="text-2xl font-bold text-white">14</div>
-                  </div>
-                </div>
-              </Panel>
-
-              <div className="grid grid-cols-2 gap-6">
-                <Panel>
-                  <h3 className="text-lg font-bold text-white mb-4">Consumo de Franquia</h3>
-                  {c.hoursTotal > 0 ? (
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-slate-400">Horas consumidas este mês</span>
-                        <span className="text-white font-bold">{c.hoursUsed}h / {c.hoursTotal}h</span>
-                      </div>
-                      <div className="w-full bg-slate-800 rounded-full h-4 mb-2 overflow-hidden">
-                        <div className={`h-4 ${c.hoursUsed > c.hoursTotal ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${Math.min((c.hoursUsed / c.hoursTotal) * 100, 100)}%` }}></div>
-                      </div>
-                      {c.hoursUsed > c.hoursTotal && (
-                        <p className="text-xs text-red-400 mt-2">⚠️ Excedente de {c.hoursUsed - c.hoursTotal} horas será faturado à parte.</p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6">
-                      <p className="text-slate-400">Cliente sem franquia de horas (Faturamento Avulso)</p>
-                      <p className="text-2xl font-bold text-white mt-2">{c.hoursUsed}h registradas</p>
-                    </div>
-                  )}
-                </Panel>
-
-                <Panel>
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-white">Últimos Tickets</h3>
-                    <button className="text-xs text-blue-400 hover:text-blue-300">Ver Todos</button>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="bg-slate-800 p-3 rounded flex justify-between items-center cursor-pointer hover:bg-slate-700">
-                      <div>
-                        <p className="text-sm text-white font-medium">Servidor fora do ar</p>
-                        <p className="text-xs text-slate-400">Há 2 horas • Fechado</p>
-                      </div>
-                      <span className="text-xs px-2 py-1 bg-green-900/30 text-green-400 rounded">Resolvido</span>
-                    </div>
-                    <div className="bg-slate-800 p-3 rounded flex justify-between items-center cursor-pointer hover:bg-slate-700">
-                      <div>
-                        <p className="text-sm text-white font-medium">Lentidão no Wi-Fi</p>
-                        <p className="text-xs text-slate-400">Há 1 dia • Em atendimento</p>
-                      </div>
-                      <span className="text-xs px-2 py-1 bg-blue-900/30 text-blue-400 rounded">Aberto</span>
-                    </div>
-                  </div>
-                </Panel>
-              </div>
-            </div>
-          ) : (
-            <div className="h-full flex items-center justify-center bg-slate-900 border border-slate-700 rounded-xl">
-              <p className="text-slate-500">Selecione um cliente para visualizar o perfil completo</p>
-            </div>
-          )}
+        <Field label="Endereço">
+          <Input
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+          />
+        </Field>
+        <Field label="Observações">
+          <Textarea
+            rows={2}
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          />
+        </Field>
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="secondary" onClick={() => setModalOpen(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={save} loading={saving} disabled={!form.name}>
+            {editing ? 'Salvar' : 'Criar'}
+          </Button>
         </div>
-      </div>
+      </Modal>
     </div>
   );
 }

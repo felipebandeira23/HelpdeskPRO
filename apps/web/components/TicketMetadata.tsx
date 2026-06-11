@@ -1,12 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from '@/lib/api';
 import {
   STATUS_STYLES,
   STATUS_LABELS,
   PRIORITY_STYLES,
   PRIORITY_LABELS,
 } from '@/components/ui';
+
+interface SlaInfo {
+  responseTime: string | null;
+  responseStatus: 'OK' | 'WARNING' | 'BREACHED';
+  respondedAt: string | null;
+  solutionTime: string | null;
+  solutionStatus: 'OK' | 'WARNING' | 'BREACHED';
+  solvedAt: string | null;
+  pausedAt: string | null;
+  policy?: { name: string } | null;
+}
 
 interface TicketMetadataProps {
   ticket: {
@@ -23,20 +35,49 @@ interface TicketMetadataProps {
     updatedAt: string;
     closedAt: string | null;
     contractStatus?: 'ACTIVE' | 'INACTIVE' | 'NO_CONTRACT';
-    recentTickets?: { id: string; title: string; status: string }[];
+    recentTickets?: { id: string; ticketNumber?: number; title: string; status: string }[];
     viewers?: { id: string; name: string; avatarUrl?: string }[];
     checklists?: { id: string; text: string; done: boolean }[];
+    category?: { id: string; name: string } | null;
+    pauseReason?: string | null;
+    sla?: SlaInfo | null;
+    followers?: { id: string; user: { id: string; name: string } }[];
   };
   onUpdate: (field: string, value: any) => Promise<void>;
+  /** Pausa atômica: envia status PAUSED + motivo num único PATCH */
+  onPause?: (reason: string) => Promise<void>;
   onDelete?: () => Promise<void>;
   onSolve?: (solution: string) => Promise<void>;
+  onFollowersChange?: () => Promise<void>;
+  currentUserId?: string;
   loading?: boolean;
 }
+
+const SLA_BADGE: Record<string, string> = {
+  OK: 'bg-green-500/15 text-green-400 border-green-500/30',
+  WARNING: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+  BREACHED: 'bg-red-500/15 text-red-400 border-red-500/30',
+};
+
+const SLA_LABEL: Record<string, string> = {
+  OK: 'No prazo',
+  WARNING: 'Prestes a estourar',
+  BREACHED: 'Estourado',
+};
 
 const statusOptions = ['OPEN', 'IN_PROGRESS', 'WAITING', 'PAUSED', 'CLOSED'];
 const priorityOptions = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
-export default function TicketMetadata({ ticket, onUpdate, onDelete, onSolve, loading = false }: TicketMetadataProps) {
+export default function TicketMetadata({
+  ticket,
+  onUpdate,
+  onPause,
+  onDelete,
+  onSolve,
+  onFollowersChange,
+  currentUserId,
+  loading = false,
+}: TicketMetadataProps) {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [localProgress, setLocalProgress] = useState(ticket.progress);
@@ -46,6 +87,33 @@ export default function TicketMetadata({ ticket, onUpdate, onDelete, onSolve, lo
   const [solutionText, setSolutionText] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSavedFeedback, setShowSavedFeedback] = useState(false);
+  const [categories, setCategories] = useState<{ id: string; path?: string; name: string }[]>([]);
+
+  useEffect(() => {
+    api
+      .get('/api/categories')
+      .then((data) => setCategories(Array.isArray(data) ? data : []))
+      .catch(() => setCategories([]));
+  }, []);
+
+  const isFollowing = !!(
+    currentUserId && ticket.followers?.some((f) => f.user.id === currentUserId)
+  );
+
+  const toggleFollow = async () => {
+    if (!currentUserId) return;
+    setUpdating(true);
+    try {
+      if (isFollowing) {
+        await api.delete(`/api/tickets/${ticket.id}/followers/${currentUserId}`);
+      } else {
+        await api.post(`/api/tickets/${ticket.id}/followers`, {});
+      }
+      await onFollowersChange?.();
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const handleUpdate = async (field: string, value: any) => {
     if (field === 'status' && value === 'PAUSED') {
@@ -73,8 +141,12 @@ export default function TicketMetadata({ ticket, onUpdate, onDelete, onSolve, lo
     if (!pauseReason.trim()) return;
     setUpdating(true);
     try {
-      await onUpdate('status', 'PAUSED');
-      await onUpdate('pauseReason', pauseReason);
+      // Único PATCH — o backend exige pauseReason junto com status PAUSED
+      if (onPause) {
+        await onPause(pauseReason);
+      } else {
+        await onUpdate('status', 'PAUSED');
+      }
       setShowPauseModal(false);
       setEditingField(null);
       setPauseReason('');
@@ -233,6 +305,136 @@ export default function TicketMetadata({ ticket, onUpdate, onDelete, onSolve, lo
             {PRIORITY_LABELS[ticket.priority] || ticket.priority}
           </button>
         )}
+      </div>
+
+      {/* Motivo da pausa (visível enquanto pausado) */}
+      {ticket.status === 'PAUSED' && ticket.pauseReason && (
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+          <p className="text-yellow-400 text-xs font-medium uppercase mb-1">
+            ⏸️ Motivo da pausa
+          </p>
+          <p className="text-slate-200 text-sm">{ticket.pauseReason}</p>
+        </div>
+      )}
+
+      {/* SLA */}
+      {ticket.sla && (
+        <div>
+          <label className="block text-xs font-medium text-slate-400 uppercase mb-2">
+            SLA {ticket.sla.policy ? `· ${ticket.sla.policy.name}` : ''}
+            {ticket.sla.pausedAt && (
+              <span className="ml-2 text-yellow-400 normal-case">(pausado)</span>
+            )}
+          </label>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between bg-slate-800/50 rounded-lg p-2.5 border border-slate-700/50">
+              <div>
+                <p className="text-slate-300 text-xs">Resposta</p>
+                {ticket.sla.responseTime && (
+                  <p className="text-slate-500 text-[10px]">
+                    até {new Date(ticket.sla.responseTime).toLocaleString('pt-BR')}
+                  </p>
+                )}
+              </div>
+              <span
+                className={`text-xs px-2 py-1 rounded border font-medium ${
+                  SLA_BADGE[ticket.sla.responseStatus]
+                }`}
+              >
+                {ticket.sla.respondedAt
+                  ? ticket.sla.responseStatus === 'OK'
+                    ? '✓ Cumprido'
+                    : '✗ Fora do prazo'
+                  : SLA_LABEL[ticket.sla.responseStatus]}
+              </span>
+            </div>
+            <div className="flex items-center justify-between bg-slate-800/50 rounded-lg p-2.5 border border-slate-700/50">
+              <div>
+                <p className="text-slate-300 text-xs">Solução</p>
+                {ticket.sla.solutionTime && (
+                  <p className="text-slate-500 text-[10px]">
+                    até {new Date(ticket.sla.solutionTime).toLocaleString('pt-BR')}
+                  </p>
+                )}
+              </div>
+              <span
+                className={`text-xs px-2 py-1 rounded border font-medium ${
+                  SLA_BADGE[ticket.sla.solutionStatus]
+                }`}
+              >
+                {ticket.sla.solvedAt
+                  ? ticket.sla.solutionStatus === 'OK'
+                    ? '✓ Cumprido'
+                    : '✗ Fora do prazo'
+                  : SLA_LABEL[ticket.sla.solutionStatus]}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Categoria - Editable */}
+      <div>
+        <label className="block text-xs font-medium text-slate-400 uppercase mb-2">
+          Categoria
+        </label>
+        {editingField === 'categoryId' ? (
+          <select
+            defaultValue={ticket.category?.id || ''}
+            onChange={(e) => handleUpdate('categoryId', e.target.value || null)}
+            disabled={updating}
+            autoFocus
+            className="w-full bg-slate-800 border border-blue-500 rounded-lg px-3 py-2 text-slate-100 cursor-pointer"
+          >
+            <option value="">Sem categoria</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.path || c.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <button
+            onClick={() => setEditingField('categoryId')}
+            disabled={updating}
+            className="w-full text-left px-3 py-2 rounded-lg text-slate-200 bg-slate-800/50 border border-slate-700/50 hover:border-slate-600 transition-colors"
+          >
+            {ticket.category?.name || (
+              <span className="text-slate-500">+ Definir categoria</span>
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* Seguidores */}
+      <div>
+        <label className="block text-xs font-medium text-slate-400 uppercase mb-2">
+          Seguidores
+        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          {(ticket.followers || []).map((f) => (
+            <div
+              key={f.id}
+              title={f.user.name}
+              className="w-8 h-8 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-xs text-slate-300 font-medium uppercase cursor-help"
+            >
+              {f.user.name.substring(0, 2)}
+            </div>
+          ))}
+          {currentUserId && (
+            <button
+              onClick={toggleFollow}
+              disabled={updating}
+              className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+                isFollowing
+                  ? 'text-yellow-400 border-yellow-500/40 hover:bg-yellow-500/10'
+                  : 'text-slate-400 border-dashed border-slate-600 hover:text-slate-200 hover:border-slate-500'
+              }`}
+            >
+              {isFollowing ? 'Deixar de seguir' : '+ Seguir'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Progress Bar */}

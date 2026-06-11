@@ -42,7 +42,13 @@ interface RecentTicket {
 
 interface SLAItem {
   id: string;
-  ticket: { id: string; title: string };
+  ticket: { id: string; title: string; ticketNumber?: number };
+}
+
+interface SlaPanelData {
+  paused: { count: number; items: SLAItem[] };
+  warning: { count: number; items: SLAItem[] };
+  breached: { count: number; items: SLAItem[] };
 }
 
 // Cores para gráficos (convertem status/priority em hex para DonutChart)
@@ -65,23 +71,24 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [recentTickets, setRecentTickets] = useState<RecentTicket[]>([]);
-  const [breached, setBreached] = useState<SLAItem[]>([]);
-  const [warning, setWarning] = useState<SLAItem[]>([]);
+  const [slaPanel, setSlaPanel] = useState<SlaPanelData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadDashboardData();
+    // Painel é "tempo real": atualiza a cada 60s acompanhando o avaliador de SLA
+    const timer = setInterval(loadDashboardData, 60_000);
+    return () => clearInterval(timer);
   }, []);
 
   const loadDashboardData = async () => {
     try {
-      const [statsData, metricsData, ticketsData, breachedData, warningData] =
+      const [statsData, metricsData, ticketsData, panelData] =
         await Promise.allSettled([
           api.get<DashboardStats>('/api/stats/dashboard'),
           api.get<Metrics>('/api/dashboard/metrics'),
           api.get<RecentTicket[]>('/api/stats/recent-tickets?limit=6'),
-          api.get<SLAItem[]>('/api/dashboard/sla/breached'),
-          api.get<SLAItem[]>('/api/dashboard/sla/warning'),
+          api.get<SlaPanelData>('/api/slas/panel'),
         ]);
 
       if (statsData.status === 'fulfilled') setStats(statsData.value);
@@ -92,10 +99,7 @@ export default function DashboardPage() {
           Array.isArray(val) ? val : (val && Array.isArray(val.data) ? val.data : [])
         );
       }
-      if (breachedData.status === 'fulfilled')
-        setBreached(Array.isArray(breachedData.value) ? breachedData.value : []);
-      if (warningData.status === 'fulfilled')
-        setWarning(Array.isArray(warningData.value) ? warningData.value : []);
+      if (panelData.status === 'fulfilled') setSlaPanel(panelData.value);
     } finally {
       setLoading(false);
     }
@@ -128,8 +132,6 @@ export default function DashboardPage() {
         color: PRIORITY_COLORS[p.priority] || '#64748b',
       })) || [];
 
-  const pausedCount =
-    metrics?.by_status.find((s) => s.status === 'PAUSED')?.count || 0;
 
   return (
     <div className="p-8">
@@ -167,24 +169,24 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <SLAPanel
           title="Prestes a Estourar"
-          count={warning.length}
+          count={slaPanel?.warning.count ?? 0}
           color="amber"
           icon="⚠️"
-          items={warning}
+          items={slaPanel?.warning.items ?? []}
         />
         <SLAPanel
           title="SLA Estourado"
-          count={breached.length}
+          count={slaPanel?.breached.count ?? 0}
           color="red"
           icon="🔴"
-          items={breached}
+          items={slaPanel?.breached.items ?? []}
         />
         <SLAPanel
           title="Pausados"
-          count={pausedCount}
+          count={slaPanel?.paused.count ?? 0}
           color="slate"
           icon="⏸️"
-          items={[]}
+          items={slaPanel?.paused.items ?? []}
         />
       </div>
 
