@@ -60,3 +60,6 @@ prisma/migrations/.tmp/
 .tmp/
 .temp/
 *.local
+
+uploads/
+apps/api/api-dev.log
