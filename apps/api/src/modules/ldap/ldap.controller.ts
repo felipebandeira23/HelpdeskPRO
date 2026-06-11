@@ -1,7 +1,9 @@
-import { Controller, Post, Get, Body } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { LdapService } from './ldap.service';
 
 @Controller('api/ldap')
+@UseGuards(JwtAuthGuard)
 export class LdapController {
   constructor(private service: LdapService) {}
 

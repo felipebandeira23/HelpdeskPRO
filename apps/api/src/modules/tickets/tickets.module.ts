@@ -2,8 +2,12 @@ import { Module } from '@nestjs/common';
 import { TicketsController } from './tickets.controller';
 import { TicketsService } from './tickets.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { SLAModule } from '../sla/sla.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { AutomationModule } from '../automation/automation.module';
 
 @Module({
+  imports: [SLAModule, NotificationsModule, AutomationModule],
   controllers: [TicketsController],
   providers: [TicketsService, PrismaService],
   exports: [TicketsService],

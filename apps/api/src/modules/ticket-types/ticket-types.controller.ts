@@ -6,7 +6,9 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { TicketTypesService } from './ticket-types.service';
 
 interface CreateTicketTypeDto {
@@ -28,6 +30,7 @@ interface UpdateTicketTypeDto {
 }
 
 @Controller('api/ticket-types')
+@UseGuards(JwtAuthGuard)
 export class TicketTypesController {
   constructor(private service: TicketTypesService) {}
 

@@ -5,12 +5,13 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { requireJwtSecret } from '../../common/config/jwt-secret';
 
 @Module({
   imports: [
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'seu-secret-jwt-super-seguro',
+      secret: requireJwtSecret(),
       signOptions: {
         expiresIn: process.env.JWT_EXPIRES_IN || '7d',
       },

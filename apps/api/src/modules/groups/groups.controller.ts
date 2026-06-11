@@ -6,11 +6,14 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { GroupsService } from './groups.service';
 import { Prisma, Group, GroupMember } from '@prisma/client';
 
 @Controller('api/groups')
+@UseGuards(JwtAuthGuard)
 export class GroupsController {
   constructor(private service: GroupsService) {}
 

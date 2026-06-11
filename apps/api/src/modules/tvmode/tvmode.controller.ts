@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { TVModeService } from './tvmode.service';
 
 interface PanelDto {
@@ -10,6 +11,7 @@ interface PanelDto {
 }
 
 @Controller('api/tvmode')
+@UseGuards(JwtAuthGuard)
 export class TVModeController {
   constructor(private service: TVModeService) {}
 

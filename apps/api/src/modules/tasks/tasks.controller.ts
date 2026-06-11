@@ -6,11 +6,14 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { TasksService } from './tasks.service';
 import { Prisma, Task } from '@prisma/client';
 
 @Controller('api/tasks')
+@UseGuards(JwtAuthGuard)
 export class TasksController {
   constructor(private service: TasksService) {}
 
