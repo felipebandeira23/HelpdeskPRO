@@ -51,6 +51,16 @@ enum ChecklistItemStatus {
   COMPLETED
 }
 
+enum NotificationType {
+  TICKET_ASSIGNED
+  TICKET_FOLLOWUP
+  TICKET_CLOSED
+  TICKET_PAUSED
+  SLA_WARNING
+  SLA_BREACHED
+  FOLLOWER_ADDED
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -66,6 +76,10 @@ model User {
   auditLogs         AuditLog[]
   tasks             Task[]          @relation("taskAssignee")
   vaultCredentials  VaultCredential[] @relation("vaultOwner")
+  followedTickets   TicketFollower[]
+  notifications     Notification[]
+  attachments       Attachment[]
+  ratings           TicketRating[]  @relation("ratingAuthor")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -110,6 +124,13 @@ model Ticket {
   priority    TicketPriority @default(MEDIUM)
   progress    Int      @default(0) @db.SmallInt
 
+  // Motivo informado pelo operador ao pausar (padrão Milvus)
+  pauseReason String?
+  pausedAt    DateTime?
+
+  // Primeira resposta pública de um operador — base do SLA de resposta
+  firstResponseAt DateTime?
+
   requesterId String
   requester   User   @relation("createdBy", fields: [requesterId], references: [id], onDelete: Restrict)
 
@@ -122,9 +143,18 @@ model Ticket {
   assetId String?
   asset   Asset?  @relation(fields: [assetId], references: [id], onDelete: SetNull)
 
-  followups TicketFollowup[]
-  sla       SLA?
-  checklist Checklist?
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  followups   TicketFollowup[]
+  sla         SLA?
+  checklist   Checklist?
+  followers   TicketFollower[]
+  attachments Attachment[]
+  rating      TicketRating?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -135,6 +165,8 @@ model Ticket {
   @@index([groupId])
   @@index([status])
   @@index([priority])
+  @@index([categoryId])
+  @@index([customerId])
   @@map("tickets")
 }
 
@@ -149,6 +181,8 @@ model TicketFollowup {
   message     String
   isInternal  Boolean @default(false)
   origin      FollowupOrigin @default(HELPDESK)
+
+  attachments Attachment[]
 
   createdAt DateTime @default(now())
 
@@ -223,11 +257,22 @@ model SLA {
   ticketId  String @unique
   ticket    Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
+  policyId  String?
+  policy    SlaPolicy? @relation(fields: [policyId], references: [id], onDelete: SetNull)
+
   responseTime    DateTime?
   responseStatus  SLAStatus @default(OK)
+  respondedAt     DateTime?
 
   solutionTime    DateTime?
   solutionStatus  SLAStatus @default(OK)
+  solvedAt        DateTime?
+
+  // Pausa do contador: enquanto pausedAt != null o relógio não corre.
+  // Ao retomar, os prazos são deslocados pelo tempo pausado.
+  // Int (minutos) e não BigInt: BigInt quebra a serialização JSON padrão.
+  pausedAt           DateTime?
+  totalPausedMinutes Int       @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -236,6 +281,152 @@ model SLA {
   @@index([responseStatus])
   @@index([solutionStatus])
   @@map("slas")
+}
+
+model SlaPolicy {
+  id   String @id @default(cuid())
+  name String
+
+  // Escopo: combinação categoria+prioridade > categoria > prioridade > global (ambos null)
+  priority   TicketPriority?
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  responseMinutes Int
+  solutionMinutes Int
+
+  // Se true, prazos contam apenas dentro do expediente e fora de feriados
+  businessHoursOnly Boolean @default(true)
+  active            Boolean @default(true)
+
+  slas SLA[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([priority, categoryId])
+  @@index([active])
+  @@map("sla_policies")
+}
+
+model BusinessHours {
+  id      String  @id @default(cuid())
+  weekday Int     // 0 = domingo ... 6 = sábado
+  start   String  // "08:00"
+  end     String  // "18:00"
+  enabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([weekday])
+  @@map("business_hours")
+}
+
+model Holiday {
+  id        String   @id @default(cuid())
+  name      String
+  date      DateTime @db.Date
+  recurring Boolean  @default(false) // repete todo ano (ex: Natal)
+
+  createdAt DateTime @default(now())
+
+  @@index([date])
+  @@map("holidays")
+}
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  color       String  @default("#2B73C9")
+  active      Boolean @default(true)
+
+  parentId String?
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryTree")
+
+  tickets     Ticket[]
+  slaPolicies SlaPolicy[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, parentId])
+  @@index([parentId])
+  @@index([active])
+  @@map("categories")
+}
+
+model TicketFollower {
+  id       String @id @default(cuid())
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([ticketId, userId])
+  @@index([userId])
+  @@map("ticket_followers")
+}
+
+model Attachment {
+  id           String @id @default(cuid())
+  filename     String // nome no disco (uuid)
+  originalName String
+  mimeType     String
+  size         Int
+
+  ticketId String?
+  ticket   Ticket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  followupId String?
+  followup   TicketFollowup? @relation(fields: [followupId], references: [id], onDelete: Cascade)
+
+  uploadedById String
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([followupId])
+  @@map("attachments")
+}
+
+model Notification {
+  id     String           @id @default(cuid())
+  userId String
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type   NotificationType
+  title  String
+  message String
+  link   String? // rota no frontend, ex: /tickets/abc
+  read   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model TicketRating {
+  id       String @id @default(cuid())
+  ticketId String @unique
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  raterId String
+  rater   User   @relation("ratingAuthor", fields: [raterId], references: [id], onDelete: Restrict)
+
+  rating  Int // 1-5
+  comment String?
+
+  createdAt DateTime @default(now())
+
+  @@index([rating])
+  @@map("ticket_ratings")
 }
 
 model ChecklistTemplate {
@@ -357,6 +548,8 @@ model Customer {
   address   String?
   contractStatus String @default("NONE") // NONE | ACTIVE | EXPIRING | OVERDUE
   notes     String?
+
+  tickets Ticket[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

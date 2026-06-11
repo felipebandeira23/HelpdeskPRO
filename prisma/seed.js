@@ -151,6 +151,84 @@ async function main() {
     ],
   });
 
+  // ─── Categorias (hierárquicas, padrão GLPI) ───────────────────────────────
+  const catHardware = await prisma.category.create({
+    data: { name: 'Hardware', color: '#E85D2D' },
+  });
+  const catSoftware = await prisma.category.create({
+    data: { name: 'Software', color: '#2B73C9' },
+  });
+  const catRede = await prisma.category.create({
+    data: { name: 'Rede', color: '#2DB87D' },
+  });
+  const catAcesso = await prisma.category.create({
+    data: { name: 'Acessos e Senhas', color: '#8B5CF6' },
+  });
+  await prisma.category.createMany({
+    data: [
+      { name: 'Impressora', parentId: catHardware.id, color: '#E85D2D' },
+      { name: 'Computador', parentId: catHardware.id, color: '#E85D2D' },
+      { name: 'Monitor / Periféricos', parentId: catHardware.id, color: '#E85D2D' },
+      { name: 'Sistema Acadêmico', parentId: catSoftware.id, color: '#2B73C9' },
+      { name: 'Pacote Office', parentId: catSoftware.id, color: '#2B73C9' },
+      { name: 'Wi-Fi', parentId: catRede.id, color: '#2DB87D' },
+      { name: 'VPN', parentId: catRede.id, color: '#2DB87D' },
+    ],
+  });
+
+  // ─── Expediente padrão (seg–sex, 08:00–18:00) ────────────────────────────
+  await prisma.businessHours.createMany({
+    data: [
+      { weekday: 0, start: '08:00', end: '18:00', enabled: false },
+      { weekday: 1, start: '08:00', end: '18:00', enabled: true },
+      { weekday: 2, start: '08:00', end: '18:00', enabled: true },
+      { weekday: 3, start: '08:00', end: '18:00', enabled: true },
+      { weekday: 4, start: '08:00', end: '18:00', enabled: true },
+      { weekday: 5, start: '08:00', end: '18:00', enabled: true },
+      { weekday: 6, start: '08:00', end: '18:00', enabled: false },
+    ],
+  });
+
+  // ─── Feriados nacionais fixos (recorrentes) ───────────────────────────────
+  await prisma.holiday.createMany({
+    data: [
+      { name: 'Confraternização Universal', date: new Date('2026-01-01'), recurring: true },
+      { name: 'Tiradentes', date: new Date('2026-04-21'), recurring: true },
+      { name: 'Dia do Trabalho', date: new Date('2026-05-01'), recurring: true },
+      { name: 'Independência do Brasil', date: new Date('2026-09-07'), recurring: true },
+      { name: 'Nossa Senhora Aparecida', date: new Date('2026-10-12'), recurring: true },
+      { name: 'Finados', date: new Date('2026-11-02'), recurring: true },
+      { name: 'Proclamação da República', date: new Date('2026-11-15'), recurring: true },
+      { name: 'Natal', date: new Date('2026-12-25'), recurring: true },
+    ],
+  });
+
+  // ─── Políticas de SLA (global + por prioridade) ──────────────────────────
+  await prisma.slaPolicy.createMany({
+    data: [
+      {
+        name: 'SLA Padrão',
+        responseMinutes: 480, // 8h úteis
+        solutionMinutes: 2400, // 40h úteis (~1 semana)
+        businessHoursOnly: true,
+      },
+      {
+        name: 'SLA Urgente',
+        priority: TicketPriority.URGENT,
+        responseMinutes: 60,
+        solutionMinutes: 480,
+        businessHoursOnly: true,
+      },
+      {
+        name: 'SLA Alta',
+        priority: TicketPriority.HIGH,
+        responseMinutes: 240,
+        solutionMinutes: 960,
+        businessHoursOnly: true,
+      },
+    ],
+  });
+
   console.log('✅ Seed concluído com sucesso!');
   console.log(`
 📊 Dados criados:
