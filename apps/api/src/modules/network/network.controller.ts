@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { NetworkService } from './network.service';
 
 @Controller('api/network')
+@UseGuards(JwtAuthGuard)
 export class NetworkController {
   constructor(private service: NetworkService) {}
 

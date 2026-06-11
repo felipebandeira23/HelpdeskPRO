@@ -19,11 +19,15 @@ type ButtonVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-blue-600 hover:bg-blue-700 text-white border-transparent',
+  // bg-* base preservado (testes fixam essas classes); profundidade via shadow/active
+  primary:
+    'bg-blue-600 hover:bg-blue-500 text-white border-transparent shadow-card hover:shadow-glow-brand active:scale-[0.98]',
   secondary:
-    'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700',
-  success: 'bg-emerald-600 hover:bg-emerald-700 text-white border-transparent',
-  danger: 'bg-red-600 hover:bg-red-700 text-white border-transparent',
+    'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 active:scale-[0.98]',
+  success:
+    'bg-emerald-600 hover:bg-emerald-500 text-white border-transparent shadow-card active:scale-[0.98]',
+  danger:
+    'bg-red-600 hover:bg-red-500 text-white border-transparent shadow-card active:scale-[0.98]',
   ghost:
     'bg-transparent hover:bg-slate-800 text-slate-300 hover:text-white border-transparent',
 };
@@ -219,13 +223,46 @@ export function Panel({
   children: ReactNode;
   className?: string;
 }) {
+  // Superfície elevada: glass sutil (design-system/MASTER.md §Tokens)
   return (
     <div
-      className={`bg-slate-900 rounded-lg border border-slate-700 p-6 ${className}`}
+      className={`bg-slate-900/70 backdrop-blur-sm rounded-xl border border-white/[0.06] shadow-card p-6 ${className}`}
     >
       {children}
     </div>
   );
+}
+
+/** Panel com cabeçalho e ações — padrão de seção do design system. */
+export function Section({
+  title,
+  actions,
+  children,
+  className = '',
+}: {
+  title: string;
+  actions?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <Panel className={className}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-white font-semibold">{title}</h2>
+        {actions}
+      </div>
+      {children}
+    </Panel>
+  );
+}
+
+/** Placeholder shimmer para cargas >300ms (regra progressive-loading). */
+export function Skeleton({
+  className = 'h-4 w-full',
+}: {
+  className?: string;
+}) {
+  return <div className={`skeleton ${className}`} aria-hidden="true" />;
 }
 
 export function Spinner({ label = 'Carregando...' }: { label?: string }) {
@@ -348,14 +385,19 @@ export function StatCard({
   accent?: string;
 }) {
   return (
-    <div className="bg-slate-900 rounded-lg border border-slate-700 p-6 hover:border-slate-600 transition-colors">
+    <div className="relative overflow-hidden bg-slate-900/70 backdrop-blur-sm rounded-xl border border-white/[0.06] shadow-card p-6 hover:border-white/[0.12] transition-colors">
+      {/* fita de acento — identidade visual dos cards de métrica */}
+      <span
+        className={`absolute inset-y-0 left-0 w-1 ${accent} opacity-80`}
+        aria-hidden="true"
+      />
       <div className="flex items-center justify-between mb-4">
         <span className={`text-2xl ${accent} bg-opacity-10 rounded-lg p-3`}>
           {icon}
         </span>
       </div>
       <h3 className="text-slate-400 text-sm font-medium mb-1">{title}</h3>
-      <p className="text-3xl font-bold text-white">{value}</p>
+      <p className="text-3xl font-bold text-white tnum">{value}</p>
     </div>
   );
 }

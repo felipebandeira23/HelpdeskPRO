@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 import TicketTimeline from '@/components/TicketTimeline';
 import TicketMetadata from '@/components/TicketMetadata';
+import TicketAttachments from '@/components/TicketAttachments';
 
 interface TicketDetail {
   id: string;
@@ -22,6 +24,11 @@ interface TicketDetail {
   createdAt: string;
   updatedAt: string;
   closedAt: string | null;
+  category?: { id: string; name: string } | null;
+  pauseReason?: string | null;
+  sla?: any;
+  followers?: Array<{ id: string; user: { id: string; name: string } }>;
+  attachments?: Array<any>;
   followups: Array<{
     id: string;
     message: string;
@@ -36,7 +43,9 @@ export default function TicketDetailPage() {
   const router = useRouter();
   const ticketId = params.id as string;
 
+  const { user: currentUser } = useAuth();
   const [ticket, setTicket] = useState<TicketDetail | null>(null);
+  const [recentTickets, setRecentTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,10 +57,27 @@ export default function TicketDetailPage() {
     try {
       const data = await api.get<TicketDetail>(`/api/tickets/${ticketId}`);
       setTicket(data);
+      // Histórico do solicitante (sidebar estilo Milvus) — não bloqueia a tela
+      api
+        .get(`/api/tickets/${ticketId}/requester-history`)
+        .then((h) => setRecentTickets(Array.isArray(h) ? h : []))
+        .catch(() => setRecentTickets([]));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar ticket');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePause = async (reason: string) => {
+    try {
+      await api.patch(`/api/tickets/${ticketId}`, {
+        status: 'PAUSED',
+        pauseReason: reason,
+      });
+      await loadTicket();
+    } catch (err) {
+      console.error('Erro ao pausar:', err);
     }
   };
 
@@ -113,11 +139,18 @@ export default function TicketDetailPage() {
           ) : error || !ticket ? (
             <div className="text-red-400">{error || 'Ticket não encontrado'}</div>
           ) : (
-            <TicketTimeline
-              followups={ticket.followups}
-              onAddFollowup={handleTimelineAddFollowup}
-              loading={loading}
-            />
+            <>
+              <TicketTimeline
+                followups={ticket.followups}
+                onAddFollowup={handleTimelineAddFollowup}
+                loading={loading}
+              />
+              <TicketAttachments
+                ticketId={ticket.id}
+                attachments={ticket.attachments || []}
+                onChange={loadTicket}
+              />
+            </>
           )}
         </div>
 
@@ -129,10 +162,13 @@ export default function TicketDetailPage() {
             <div className="text-red-400">{error || 'Ticket não encontrado'}</div>
           ) : (
             <TicketMetadata
-              ticket={ticket}
+              ticket={{ ...ticket, recentTickets }}
               onUpdate={handleMetadataUpdate}
+              onPause={handlePause}
               onDelete={handleDelete}
               onSolve={handleSolve}
+              onFollowersChange={loadTicket}
+              currentUserId={currentUser?.id}
               loading={loading}
             />
           )}

@@ -1,14 +1,15 @@
 import {
   IsString,
   IsOptional,
-  IsUUID,
   IsEnum,
   IsInt,
   Min,
   Max,
+  MaxLength,
 } from 'class-validator';
 import { TicketStatus, TicketPriority } from '@prisma/client';
 
+// IDs são cuid() (não UUID) — @IsUUID rejeitava IDs válidos do banco.
 export class UpdateTicketDto {
   @IsOptional()
   @IsString()
@@ -33,14 +34,28 @@ export class UpdateTicketDto {
   progress?: number;
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   assignedToId?: string;
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   groupId?: string;
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   assetId?: string;
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  customerId?: string;
+
+  /** Obrigatório quando status muda para PAUSED */
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  pauseReason?: string;
 }

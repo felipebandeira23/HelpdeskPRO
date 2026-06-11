@@ -26,6 +26,9 @@ import { UsersModule } from './modules/users/users.module';
 import { GroupsModule } from './modules/groups/groups.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { TasksModule } from './modules/tasks/tasks.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { AttachmentsModule } from './modules/attachments/attachments.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { PrismaService } from './common/prisma/prisma.service';
 
 @Module({
@@ -58,6 +61,9 @@ import { PrismaService } from './common/prisma/prisma.service';
     GroupsModule,
     CustomersModule,
     TasksModule,
+    CategoriesModule,
+    AttachmentsModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

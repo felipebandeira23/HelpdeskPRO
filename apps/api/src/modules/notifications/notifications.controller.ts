@@ -1,37 +1,48 @@
-import { Controller, Get, Post, Patch, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Param,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
+import { JwtAuthGuard } from '../auth/jwt.guard';
+import { Notification } from '@prisma/client';
 
-interface SendNotificationDto {
-  userId: string;
-  type: 'email' | 'push' | 'in-app';
-  subject: string;
-  message: string;
+interface AuthRequest {
+  user: { id: string };
 }
 
 @Controller('api/notifications')
+@UseGuards(JwtAuthGuard)
 export class NotificationsController {
   constructor(private service: NotificationsService) {}
 
-  @Post('send')
-  sendNotification(@Body() data: SendNotificationDto): Promise<unknown> {
-    return this.service.sendNotification(data);
+  @Get()
+  list(
+    @Request() req: AuthRequest,
+    @Query('unread') unread?: string,
+  ): Promise<Notification[]> {
+    return this.service.list(req.user.id, unread === 'true');
   }
 
-  @Get(':userId')
-  getNotifications(@Param('userId') userId: string): Promise<unknown[]> {
-    return this.service.getNotifications(userId);
+  @Get('unread-count')
+  unreadCount(@Request() req: AuthRequest): Promise<{ count: number }> {
+    return this.service.unreadCount(req.user.id);
   }
 
-  @Patch(':notificationId/read')
-  markAsRead(@Param('notificationId') notificationId: string): Promise<unknown> {
-    return this.service.markAsRead(notificationId);
+  @Patch('read-all')
+  markAllAsRead(@Request() req: AuthRequest): Promise<{ success: boolean }> {
+    return this.service.markAllAsRead(req.user.id);
   }
 
-  @Post(':userId/preferences')
-  setPreferences(
-    @Param('userId') userId: string,
-    @Body() preferences: Record<string, unknown>,
-  ): Promise<unknown> {
-    return this.service.setNotificationPreferences(userId, preferences);
+  @Patch(':id/read')
+  markAsRead(
+    @Param('id') id: string,
+    @Request() req: AuthRequest,
+  ): Promise<{ success: boolean }> {
+    return this.service.markAsRead(id, req.user.id);
   }
 }

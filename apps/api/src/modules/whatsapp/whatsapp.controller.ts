@@ -1,7 +1,9 @@
-import { Controller, Post, Get, Body, Query } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { WhatsappService } from './whatsapp.service';
 
 @Controller('api/whatsapp')
+@UseGuards(JwtAuthGuard)
 export class WhatsappController {
   constructor(private service: WhatsappService) {}
 

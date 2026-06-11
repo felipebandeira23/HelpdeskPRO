@@ -6,10 +6,13 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { ChecklistsService } from './checklists.service';
 
 @Controller('api/tickets/:ticketId/checklists')
+@UseGuards(JwtAuthGuard)
 export class ChecklistsController {
   constructor(private checklistsService: ChecklistsService) {}
 

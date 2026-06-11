@@ -17,6 +17,7 @@ export function CreateTicketModal({ onClose, onSuccess }: CreateTicketModalProps
   const [groups, setGroups] = useState<any[]>([]);
   const [assets, setAssets] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -26,6 +27,7 @@ export function CreateTicketModal({ onClose, onSuccess }: CreateTicketModalProps
     assetId: '',
     assignedToId: '',
     requesterId: '',
+    categoryId: '',
   });
 
   useEffect(() => {
@@ -56,6 +58,13 @@ export function CreateTicketModal({ onClose, onSuccess }: CreateTicketModalProps
       } catch (err) {
         console.error('Erro ao carregar usuários:', err);
       }
+
+      try {
+        const categoriesData = await api.get('/api/categories');
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      } catch (err) {
+        console.error('Erro ao carregar categorias:', err);
+      }
     };
     loadData();
   }, []);
@@ -72,6 +81,7 @@ export function CreateTicketModal({ onClose, onSuccess }: CreateTicketModalProps
         assetId: formData.assetId || undefined,
         assignedToId: formData.assignedToId || undefined,
         requesterId: formData.requesterId || undefined,
+        categoryId: formData.categoryId || undefined,
       });
       
       // Dispatch global ticket created event
@@ -144,6 +154,20 @@ export function CreateTicketModal({ onClose, onSuccess }: CreateTicketModalProps
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field label="Categoria">
+              <Select
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+              >
+                <option value="">Sem categoria</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.path || c.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
             <Field label="Prioridade">
               <Select
                 value={formData.priority}

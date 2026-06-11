@@ -4,6 +4,8 @@
 
 > **Atenção:** as estimativas de tempo são para alguém trabalhando full-time. Em paralelo com outras atividades, dobre ou triplique.
 
+> **⚠️ Checkboxes desatualizados.** Estado real em `docs/CHANGELOG.md`. Entrega de 11/06/2026 cobriu: categorias hierárquicas, anexos, SLA real (políticas + expediente + feriados + pausa + cron), notificações persistidas, auditoria global, seguidores, motivo de pausa, reports e ratings reais. Equivale a: Sprint 1.2 (parcial), 1.4 (completo+), 2.2 (backend), 4.2 (modelagem) e itens de segurança (audit log).
+
 ---
 
 ## Fase 0 — Bootstrap (2-3 semanas)
