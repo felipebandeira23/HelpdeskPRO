@@ -104,33 +104,33 @@ export default function NotificationsSettingsPage() {
             <Field label="SMTP Host" required>
               <Input
                 type="text"
-                value={smtp.host}
-                onChange={(e) => setSmtp({ ...smtp, host: e.target.value })}
+                value={settings.smtp.host}
+                onChange={(e) => save({ ...settings, smtp: { ...settings.smtp, host: e.target.value } })}
               />
             </Field>
             <Field label="Porta SMTP" required>
               <Input
                 type="text"
-                value={smtp.port}
-                onChange={(e) => setSmtp({ ...smtp, port: e.target.value })}
+                value={String(settings.smtp.port)}
+                onChange={(e) => save({ ...settings, smtp: { ...settings.smtp, port: parseInt(e.target.value) || 587 } })}
               />
             </Field>
             <Field label="Usuário / E-mail Remetente" required>
               <Input
                 type="email"
-                value={smtp.user}
-                onChange={(e) => setSmtp({ ...smtp, user: e.target.value })}
+                value={settings.smtp.user}
+                onChange={(e) => save({ ...settings, smtp: { ...settings.smtp, user: e.target.value } })}
               />
             </Field>
             <Field label="Nome Exibido" required>
               <Input
                 type="text"
-                value={smtp.sender}
-                onChange={(e) => setSmtp({ ...smtp, sender: e.target.value })}
+                value={settings.smtp.sender}
+                onChange={(e) => save({ ...settings, smtp: { ...settings.smtp, sender: e.target.value } })}
               />
             </Field>
-            <Button variant="primary" fullWidth type="submit">
-              {smtpFeedback ? '✓ Configurações Salvas' : 'Salvar SMTP'}
+            <Button variant="primary" fullWidth type="submit" disabled={saving}>
+              {saving ? '⟳ Salvando...' : '✓ Salvar SMTP'}
             </Button>
           </form>
         </Panel>
@@ -144,7 +144,7 @@ export default function NotificationsSettingsPage() {
 
           {/* Webhooks List */}
           <div className="space-y-3">
-            {webhooks.map((w) => (
+            {settings.webhooks.map((w) => (
               <div key={w.id} className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700/60 text-sm">
                 <div className="space-y-1">
                   <p className="font-bold text-white">{w.name}</p>
