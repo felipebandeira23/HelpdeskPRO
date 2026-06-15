@@ -182,7 +182,7 @@ export default function TicketTimeline({
 
             <div className="h-6 w-px bg-slate-700 mx-1"></div>
 
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white transition-colors">
+            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white transition-colors relative group">
               <input
                 type="checkbox"
                 checked={isInternal}
@@ -190,7 +190,13 @@ export default function TicketTimeline({
                 disabled={isSubmitting}
                 className="rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
               />
-              <span className="flex items-center gap-1"><span className="text-purple-400">🔒</span> Nota interna</span>
+              <span className="flex items-center gap-1">
+                <span className="text-purple-400">🔒</span> Nota interna
+                <span className="text-slate-400 hover:text-slate-200 transition-colors cursor-help">?</span>
+              </span>
+              <div className="absolute bottom-full left-0 mb-2 w-56 p-2 bg-slate-900 text-xs text-slate-400 rounded border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                Notas internas são visíveis apenas para técnicos e administradores. O solicitante não verá estas informações.
+              </div>
             </label>
 
             <div className="h-6 w-px bg-slate-700 mx-1 ml-auto"></div>

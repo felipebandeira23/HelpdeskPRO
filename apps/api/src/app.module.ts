@@ -29,6 +29,8 @@ import { TasksModule } from './modules/tasks/tasks.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { AttachmentsModule } from './modules/attachments/attachments.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { MailModule } from './modules/mail/mail.module';
+import { SettingsModule } from './modules/settings/settings.module';
 import { PrismaService } from './common/prisma/prisma.service';
 
 @Module({
@@ -64,6 +66,8 @@ import { PrismaService } from './common/prisma/prisma.service';
     CategoriesModule,
     AttachmentsModule,
     AuditModule,
+    MailModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

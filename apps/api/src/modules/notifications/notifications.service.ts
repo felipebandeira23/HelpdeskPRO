@@ -1,6 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { Notification, NotificationType } from '@prisma/client';
+import { sendMailQuick, emailTemplate } from '../mail/mailer';
+
+// Tipos que também disparam email (os demais ficam só no sino)
+const EMAIL_TYPES: NotificationType[] = [
+  'TICKET_ASSIGNED',
+  'TICKET_CLOSED',
+  'TICKET_FOLLOWUP',
+  'SLA_BREACHED',
+];
 
 export interface NotifyInput {
   userId: string;
@@ -17,10 +26,28 @@ export class NotificationsService {
   /** Cria uma notificação. Nunca lança — falha de notificação não pode quebrar a operação principal. */
   async notify(input: NotifyInput): Promise<Notification | null> {
     try {
-      return await this.prisma.notification.create({ data: input });
+      const notification = await this.prisma.notification.create({ data: input });
+      this.maybeEmail(input); // fire-and-forget
+      return notification;
     } catch {
       return null;
     }
+  }
+
+  /** Espelha notificações importantes por email (se SMTP configurado). */
+  private maybeEmail(input: NotifyInput): void {
+    if (!EMAIL_TYPES.includes(input.type)) return;
+    this.prisma.user
+      .findUnique({ where: { id: input.userId }, select: { email: true } })
+      .then((user) => {
+        if (!user?.email) return;
+        return sendMailQuick(
+          user.email,
+          `[HelpdeskPRO] ${input.title}`,
+          emailTemplate(input.title, input.message, input.link || undefined),
+        );
+      })
+      .catch(() => undefined);
   }
 
   /** Notifica vários usuários de uma vez, ignorando duplicados na lista. */

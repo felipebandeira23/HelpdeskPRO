@@ -24,7 +24,7 @@ import {
 } from '@prisma/client';
 
 interface AuthRequest {
-  user: { id: string };
+  user: { id: string; role: string };
 }
 
 @Controller('api/tickets')
@@ -65,8 +65,11 @@ export class TicketsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<Ticket> {
-    return this.ticketsService.findById(id);
+  async findOne(
+    @Param('id') id: string,
+    @Request() req: AuthRequest,
+  ): Promise<Ticket> {
+    return this.ticketsService.findById(id, req.user);
   }
 
   @Get(':id/requester-history')

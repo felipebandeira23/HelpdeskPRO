@@ -1,58 +1,65 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { PageHeader, Panel, Button, Field, Input } from '@/components/ui';
+import { useSettings } from '@/lib/use-settings';
+
+interface SmtpConfig {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  sender: string;
+  secure: boolean;
+}
+
+interface Webhook {
+  id: string;
+  name: string;
+  url: string;
+  event: string;
+  active: boolean;
+}
+
+interface NotificationSettings {
+  smtp: SmtpConfig;
+  webhooks: Webhook[];
+}
 
 export default function NotificationsSettingsPage() {
-  const [smtp, setSmtp] = useState({
-    host: 'smtp.workspace.ufrj.br',
-    port: '587',
-    user: 'helpdesk@coppead.ufrj.br',
-    sender: 'Suporte HelpdeskPRO',
+  const { data: settings, loading, saving, save } = useSettings<NotificationSettings>('notifications', {
+    smtp: {
+      host: 'smtp.workspace.ufrj.br',
+      port: 587,
+      user: 'helpdesk@coppead.ufrj.br',
+      password: '',
+      sender: 'Suporte HelpdeskPRO',
+      secure: false,
+    },
+    webhooks: [
+      { id: '1', name: 'Alertas de Tickets (Discord)', url: 'https://discord.com/api/webhooks/...', event: 'ticket.created', active: true },
+      { id: '2', name: 'Alerta de SLAs Estourados (Teams)', url: 'https://msteams.webhook.office.com/...', event: 'sla.breached', active: true },
+    ],
   });
-
-  const [webhooks, setWebhooks] = useState([
-    { id: '1', name: 'Alertas de Tickets (Discord)', url: 'https://discord.com/api/webhooks/...', event: 'ticket.created', active: true },
-    { id: '2', name: 'Alerta de SLAs Estourados (Teams)', url: 'https://msteams.webhook.office.com/...', event: 'sla.breached', active: true },
-  ]);
 
   const [newWebhookName, setNewWebhookName] = useState('');
   const [newWebhookUrl, setNewWebhookUrl] = useState('');
   const [newWebhookEvent, setNewWebhookEvent] = useState('ticket.created');
-  const [smtpFeedback, setSmtpFeedback] = useState(false);
 
-  useEffect(() => {
-    const localSmtp = localStorage.getItem('settings_smtp');
-    const localWebhooks = localStorage.getItem('settings_webhooks');
-    if (localSmtp) {
-      try {
-        setSmtp(JSON.parse(localSmtp));
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    if (localWebhooks) {
-      try {
-        setWebhooks(JSON.parse(localWebhooks));
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }, []);
-
-  const handleSaveSmtp = (e: React.FormEvent) => {
+  const handleSaveSmtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('settings_smtp', JSON.stringify(smtp));
-    setSmtpFeedback(true);
-    setTimeout(() => setSmtpFeedback(false), 3000);
+    await save({
+      ...settings,
+      smtp: settings.smtp,
+    });
   };
 
-  const addWebhook = (e: React.FormEvent) => {
+  const addWebhook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newWebhookName || !newWebhookUrl) return;
     const updatedWebhooks = [
-      ...webhooks,
+      ...settings.webhooks,
       {
         id: String(Date.now()),
         name: newWebhookName,
@@ -61,22 +68,19 @@ export default function NotificationsSettingsPage() {
         active: true,
       },
     ];
-    setWebhooks(updatedWebhooks);
-    localStorage.setItem('settings_webhooks', JSON.stringify(updatedWebhooks));
+    await save({ ...settings, webhooks: updatedWebhooks });
     setNewWebhookName('');
     setNewWebhookUrl('');
   };
 
-  const deleteWebhook = (id: string) => {
-    const updatedWebhooks = webhooks.filter((w) => w.id !== id);
-    setWebhooks(updatedWebhooks);
-    localStorage.setItem('settings_webhooks', JSON.stringify(updatedWebhooks));
+  const deleteWebhook = async (id: string) => {
+    const updatedWebhooks = settings.webhooks.filter((w) => w.id !== id);
+    await save({ ...settings, webhooks: updatedWebhooks });
   };
 
-  const toggleWebhook = (id: string) => {
-    const updatedWebhooks = webhooks.map((w) => (w.id === id ? { ...w, active: !w.active } : w));
-    setWebhooks(updatedWebhooks);
-    localStorage.setItem('settings_webhooks', JSON.stringify(updatedWebhooks));
+  const toggleWebhook = async (id: string) => {
+    const updatedWebhooks = settings.webhooks.map((w) => (w.id === id ? { ...w, active: !w.active } : w));
+    await save({ ...settings, webhooks: updatedWebhooks });
   };
 
   return (

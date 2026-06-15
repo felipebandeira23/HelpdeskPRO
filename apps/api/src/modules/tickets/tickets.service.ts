@@ -9,6 +9,7 @@ import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { SLAService } from '../sla/sla.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AutomationService } from '../automation/automation.service';
+import { SettingsService } from '../settings/settings.service';
 import { TicketContext } from '../automation/automation-engine';
 import {
   Ticket,
@@ -45,14 +46,22 @@ export class TicketsService {
     private slaService: SLAService,
     private notifications: NotificationsService,
     private automation: AutomationService,
+    private settings: SettingsService,
   ) {}
 
   async create(dto: CreateTicketDto, userId: string): Promise<Ticket> {
+    // Lê configurações de tickets do SettingsService
+    const ticketConfig = await this.settings.getSettings('tickets', {
+      defaultPriority: 'MEDIUM',
+      defaultStatus: 'OPEN',
+    });
+
     const ticket = await this.prisma.ticket.create({
       data: {
         title: dto.title,
         description: dto.description,
-        priority: dto.priority || 'MEDIUM',
+        priority: (dto.priority || ticketConfig.defaultPriority) as any,
+        status: (ticketConfig.defaultStatus || 'OPEN') as any,
         requesterId: dto.requesterId || userId,
         groupId: dto.groupId,
         assetId: dto.assetId,
@@ -123,7 +132,7 @@ export class TicketsService {
     };
   }
 
-  async findById(id: string): Promise<Ticket> {
+  async findById(id: string, user?: { id: string; role: string }): Promise<Ticket> {
     const ticket = await this.prisma.ticket.findUnique({
       where: { id },
       include: {
@@ -143,6 +152,18 @@ export class TicketsService {
 
     if (!ticket) {
       throw new NotFoundException(`Ticket ${id} não encontrado`);
+    }
+
+    if (user) {
+      const isAgent = user.role === 'ADMIN' || user.role === 'TECHNICIAN';
+      const isRequester = ticket.requesterId === user.id;
+
+      ticket.followups = ticket.followups.filter((followup) => {
+        if (followup.isInternal) {
+          return isAgent;
+        }
+        return true;
+      });
     }
 
     return ticket;

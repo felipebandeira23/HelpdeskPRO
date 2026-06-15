@@ -503,35 +503,6 @@ export default function TicketMetadata({
           </div>
         </div>
 
-        {/* Effort & Billing (Apontamento de Horas) */}
-        <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase mb-2">
-            Esforço e Faturamento
-          </label>
-          <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-slate-300">Horas Apontadas:</span>
-              <span className="text-sm font-bold font-mono text-white">
-                {String(Math.floor(((localProgress / 5) * 15) / 60)).padStart(2, '0')}h {String(((localProgress / 5) * 15) % 60).padStart(2, '0')}m
-              </span>
-            </div>
-            <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden mb-3">
-              <div className="bg-blue-500 h-full" style={{ width: `${localProgress}%` }}></div>
-            </div>
-            <div className="flex justify-between items-center pt-2 border-t border-slate-700/50">
-              <span className="text-sm text-slate-400">Custo Estimado:</span>
-              <span className="text-sm font-bold text-green-400">
-                {(((localProgress / 5) * 15) / 60 * 150).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </span>
-            </div>
-            {ticket.contractStatus === 'INACTIVE' && (
-              <p className="text-[10px] text-red-400 mt-2 font-medium bg-red-900/20 p-1.5 rounded border border-red-900/50">
-                Atenção: Contrato Inadimplente. Este serviço será cobrado avulso se autorizado.
-              </p>
-            )}
-          </div>
-        </div>
-
         {/* Recent Tickets from Requester */}
         {ticket.recentTickets && ticket.recentTickets.length > 0 && (
           <div>
