@@ -12,16 +12,13 @@ import {
 import { CategoriesService, CategoryNode } from './categories.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 import { JwtAuthGuard } from '../auth/jwt.guard';
-import { Roles, RolesGuard } from '../../common/guards/roles.guard';
 import { Category } from '@prisma/client';
 
 @Controller('api/categories')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class CategoriesController {
   constructor(private service: CategoriesService) {}
 
   @Post()
-  @Roles('ADMIN')
   create(@Body() dto: CreateCategoryDto): Promise<Category> {
     return this.service.create(dto);
   }
@@ -44,7 +41,6 @@ export class CategoriesController {
   }
 
   @Patch(':id')
-  @Roles('ADMIN')
   update(
     @Param('id') id: string,
     @Body() dto: UpdateCategoryDto,
@@ -53,7 +49,6 @@ export class CategoriesController {
   }
 
   @Delete(':id')
-  @Roles('ADMIN')
   delete(@Param('id') id: string): Promise<{ message: string }> {
     return this.service.delete(id);
   }

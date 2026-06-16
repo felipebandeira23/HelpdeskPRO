@@ -31,6 +31,40 @@ const AGENT_BADGE: Record<string, { label: string; cls: string; dot: string }> =
   UNKNOWN: { label: 'Sem agente', cls: 'text-slate-400', dot: 'bg-slate-500' },
 };
 
+// Campos específicos por tipo de dispositivo
+const TYPE_SPECIFIC_FIELDS: Record<string, { label: string; placeholder: string }[]> = {
+  PRINTER: [
+    { label: 'Modelo da impressora', placeholder: 'HP LaserJet M4003dw' },
+    { label: 'Contagem de páginas', placeholder: '45230' },
+    { label: 'Cartucho / Toner', placeholder: 'Toner preto (50%)' },
+  ],
+  MONITOR: [
+    { label: 'Resolução', placeholder: '1920x1080' },
+    { label: 'Tamanho da tela (polegadas)', placeholder: '27"' },
+    { label: 'Tipo de conexão', placeholder: 'HDMI, DisplayPort' },
+  ],
+  SWITCH: [
+    { label: 'Número de portas', placeholder: '48' },
+    { label: 'Gerenciável (managed)', placeholder: 'Sim/Não' },
+    { label: 'VLAN suportadas', placeholder: '4094' },
+  ],
+  ROUTER: [
+    { label: 'Modelo', placeholder: 'Cisco ASR 1000' },
+    { label: 'Velocidade WAN (Mbps)', placeholder: '1000' },
+    { label: 'Padrão wireless', placeholder: 'WiFi 6 (802.11ax)' },
+  ],
+  PHONE: [
+    { label: 'Número de telefone', placeholder: '+55 11 1234-5678' },
+    { label: 'Operadora', placeholder: 'Vivo/Claro/Oi' },
+    { label: 'IMEI / Serial', placeholder: 'IMEI123456789' },
+  ],
+  TABLET: [
+    { label: 'Versão do SO', placeholder: 'iOS 17.2' },
+    { label: 'Capacidade de armazenamento', placeholder: '128GB' },
+    { label: 'Versão do navegador', placeholder: 'Safari 17' },
+  ],
+};
+
 interface Asset {
   id: string;
   hostname: string;
@@ -231,6 +265,25 @@ export default function AssetMain({ assetId, asset: initial }: { assetId: string
               </Field>
             </div>
           </Section>
+
+          {/* Campos específicos do tipo */}
+          {TYPE_SPECIFIC_FIELDS[form.assetType] && (
+            <Section title={`Especificações (${ASSET_TYPES.find((t) => t.value === form.assetType)?.label})`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {TYPE_SPECIFIC_FIELDS[form.assetType].map((field, idx) => (
+                  <Field key={idx} label={field.label}>
+                    <Input
+                      placeholder={field.placeholder}
+                      onBlur={(e) => {
+                        // Você pode salvar isso em um campo JSON no backend depois
+                        console.log(`${field.label}: ${e.target.value}`);
+                      }}
+                    />
+                  </Field>
+                ))}
+              </div>
+            </Section>
+          )}
 
           <Section title="Responsáveis">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

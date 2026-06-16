@@ -1,23 +1,44 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { Prisma, Asset, Ticket } from '@prisma/client';
+import { Prisma, Ticket, AssetType } from '@prisma/client';
+import { isTelemetryCapable } from '../../common/constants/asset.constants';
 
 const ASSET_INCLUDE = {
   technician: { select: { id: true, name: true, email: true } },
   assetUser: { select: { id: true, name: true, email: true } },
   tickets: { select: { id: true, ticketNumber: true, title: true, status: true, priority: true } },
+  connectionsAsParent: {
+    select: {
+      id: true,
+      kind: true,
+      child: { select: { id: true, hostname: true, assetType: true } },
+    },
+  },
+  connectionsAsChild: {
+    select: {
+      id: true,
+      kind: true,
+      parent: { select: { id: true, hostname: true, assetType: true } },
+    },
+  },
 } as const;
 
 @Injectable()
 export class AssetsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: Prisma.AssetCreateInput): Promise<Asset> {
+  async create(data: Prisma.AssetCreateInput) {
     return this.prisma.asset.create({ data });
   }
 
-  async findAll(): Promise<Asset[]> {
+  async findAll(types?: string) {
+    const where: Prisma.AssetWhereInput = {};
+    if (types) {
+      const typeList = types.split(',').map((t) => t.trim());
+      where.assetType = { in: typeList as AssetType[] };
+    }
     return this.prisma.asset.findMany({
+      where,
       include: ASSET_INCLUDE,
       orderBy: { hostname: 'asc' },
     });
@@ -32,11 +53,11 @@ export class AssetsService {
     return asset;
   }
 
-  async update(id: string, data: Prisma.AssetUpdateInput): Promise<Asset> {
+  async update(id: string, data: Prisma.AssetUpdateInput) {
     return this.prisma.asset.update({ where: { id }, data });
   }
 
-  async delete(id: string): Promise<Asset> {
+  async delete(id: string) {
     return this.prisma.asset.delete({ where: { id } });
   }
 
@@ -189,5 +210,80 @@ export class AssetsService {
       where: { assetId },
       orderBy: { recordedAt: 'desc' },
     });
+  }
+
+  // ── Conexões de Ativos ────────────────────────────────────────
+
+  async getConnections(assetId: string) {
+    const asset = await this.findOne(assetId);
+    return {
+      asParent: asset.connectionsAsParent || [],
+      asChild: asset.connectionsAsChild || [],
+    };
+  }
+
+  async addConnection(parentId: string, childId: string, kind: string = 'DIRECT') {
+    if (parentId === childId) {
+      throw new BadRequestException('Um ativo não pode se conectar a si mesmo');
+    }
+
+    // Verifica se ambos os ativos existem
+    const [parent, child] = await Promise.all([this.findOne(parentId), this.findOne(childId)]);
+    if (!parent || !child) {
+      throw new NotFoundException('Um ou ambos os ativos não foram encontrados');
+    }
+
+    return this.prisma.assetConnection.create({
+      data: { parentId, childId, kind: kind as any },
+      include: {
+        parent: { select: { id: true, hostname: true, assetType: true } },
+        child: { select: { id: true, hostname: true, assetType: true } },
+      },
+    });
+  }
+
+  async removeConnection(connectionId: string) {
+    return this.prisma.assetConnection.delete({ where: { id: connectionId } });
+  }
+
+  // ── Validação de Specs ─────────────────────────────────────────
+
+  validateSpecs(assetType: string, specs: any): Record<string, any> {
+    if (!specs || typeof specs !== 'object') return {};
+
+    // Whitelist de campos por tipo de ativo
+    const allowedSpecs: Record<string, string[]> = {
+      COMPUTER: ['ram', 'cpu', 'ssd', 'hdd', 'gpus'],
+      LAPTOP: ['ram', 'cpu', 'ssd', 'battery', 'screen'],
+      SERVER: ['ram', 'cpu', 'ssd', 'hdd', 'gpus', 'redundantPsu'],
+      PRINTER: ['model', 'colorSupport', 'maxResolution', 'monthlyCapacity'],
+      SWITCH: ['ports', 'bandwidth', 'manageable', 'vlans'],
+      ROUTER: ['ports', 'bandwidth', 'wifiStandard', 'throughput'],
+      PHONE: ['os', 'ram', 'storage', 'screen', 'battery'],
+      TABLET: ['os', 'ram', 'storage', 'screen', 'battery'],
+      MONITOR: ['resolution', 'size', 'refreshRate', 'type'],
+      ACCESS_POINT: ['standard', 'bands', 'power', 'coverage'],
+      NETWORK_EQUIPMENT: ['type', 'ports', 'bandwidth'],
+      PERIPHERAL: ['type', 'connection'],
+      CARTRIDGE: ['color', 'yield', 'model'],
+      CONSUMABLE: ['type', 'quantity', 'unit'],
+      RACK: ['units', 'width', 'depth', 'maxLoad'],
+      ENCLOSURE: ['units', 'form', 'slots'],
+      PDU: ['outlets', 'voltage', 'current'],
+      PASSIVE_DEVICE: ['type', 'length'],
+      CABLE: ['type', 'length', 'connectors'],
+      OTHER: [],
+    };
+
+    const allowed = allowedSpecs[assetType] || [];
+    const validated: Record<string, any> = {};
+
+    for (const key of allowed) {
+      if (key in specs) {
+        validated[key] = specs[key];
+      }
+    }
+
+    return validated;
   }
 }

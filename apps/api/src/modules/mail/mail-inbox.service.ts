@@ -12,8 +12,6 @@
 import {
   Injectable,
   Logger,
-  OnModuleInit,
-  OnModuleDestroy,
 } from '@nestjs/common';
 import { ImapFlow } from 'imapflow';
 import { simpleParser } from 'mailparser';
@@ -24,29 +22,14 @@ import { SLAService } from '../sla/sla.service';
 import { sendMailQuick, emailTemplate } from './mailer';
 
 @Injectable()
-export class MailInboxService implements OnModuleInit, OnModuleDestroy {
+export class MailInboxService {
   private readonly logger = new Logger(MailInboxService.name);
-  private timer: ReturnType<typeof setInterval> | null = null;
   private polling = false;
 
   constructor(
     private prisma: PrismaService,
     private slaService: SLAService,
   ) {}
-
-  onModuleInit(): void {
-    if (!process.env.IMAP_HOST) {
-      this.logger.warn('IMAP_HOST não configurado — coleta de emails desabilitada');
-      return;
-    }
-    const seconds = parseInt(process.env.IMAP_POLL_SECONDS || '120', 10);
-    this.timer = setInterval(() => void this.poll(), seconds * 1000);
-    this.logger.log(`Coletor IMAP ativo (intervalo ${seconds}s)`);
-  }
-
-  onModuleDestroy(): void {
-    if (this.timer) clearInterval(this.timer);
-  }
 
   /** Um ciclo de coleta. Exposto para testes/disparo manual. */
   async poll(): Promise<{ created: number }> {
@@ -150,8 +133,18 @@ export class MailInboxService implements OnModuleInit, OnModuleDestroy {
     if (existing) return existing;
 
     const randomPassword = await bcrypt.hash(randomBytes(24).toString('hex'), 10);
+
+    const viewerProfile = await this.prisma.profile.findFirst({
+      where: { name: 'Visualizador' },
+    });
+
     return this.prisma.user.create({
-      data: { email, name, password: randomPassword, role: 'VIEWER' },
+      data: {
+        email,
+        name,
+        password: randomPassword,
+        profileId: viewerProfile?.id || '',
+      },
     });
   }
 }

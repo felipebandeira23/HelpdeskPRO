@@ -159,8 +159,18 @@ export class PortalService {
     if (existing) return existing;
 
     const randomPassword = await bcrypt.hash(randomBytes(24).toString('hex'), 10);
+
+    const viewerProfile = await this.prisma.profile.findFirst({
+      where: { name: 'Visualizador' },
+    });
+
     return this.prisma.user.create({
-      data: { email, name, password: randomPassword, role: 'VIEWER' },
+      data: {
+        email,
+        name,
+        password: randomPassword,
+        profileId: viewerProfile?.id || '',
+      },
     });
   }
 }

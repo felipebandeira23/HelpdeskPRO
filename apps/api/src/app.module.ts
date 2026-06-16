@@ -31,7 +31,10 @@ import { AttachmentsModule } from './modules/attachments/attachments.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { MailModule } from './modules/mail/mail.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { ProfilesModule } from './modules/profiles/profiles.module';
+import { DiscoveryModule } from './modules/discovery/discovery.module';
 import { PrismaService } from './common/prisma/prisma.service';
+import { CronModule } from './modules/cron/cron.module';
 
 @Module({
   imports: [
@@ -68,6 +71,9 @@ import { PrismaService } from './common/prisma/prisma.service';
     AuditModule,
     MailModule,
     SettingsModule,
+    ProfilesModule,
+    DiscoveryModule,
+    CronModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

@@ -1,7 +1,3 @@
-/**
- * RBAC mínimo viável: @Roles('ADMIN') em handlers ou controllers.
- * Depende do JwtAuthGuard ter populado req.user (rodar depois dele).
- */
 import {
   Injectable,
   CanActivate,
@@ -10,31 +6,44 @@ import {
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { UserRole } from '@prisma/client';
 
 export const ROLES_KEY = 'roles';
-export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);
+
+export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const required = this.reflector.getAllAndOverride<UserRole[] | undefined>(
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
     );
-    if (!required || required.length === 0) return true;
 
-    const { user } = context
-      .switchToHttp()
-      .getRequest<{ user?: { role?: UserRole } }>();
+    if (!requiredRoles) {
+      return true;
+    }
 
-    if (!user?.role || !required.includes(user.role)) {
+    const { user } = context.switchToHttp().getRequest<{
+      user?: { id: string; profile?: { name: string } };
+    }>();
+
+    if (!user) {
+      throw new ForbiddenException('Usuário não autenticado');
+    }
+
+    const profileName = user.profile?.name;
+    if (!profileName) {
+      throw new ForbiddenException('Perfil do usuário não encontrado');
+    }
+
+    if (!requiredRoles.includes(profileName)) {
       throw new ForbiddenException(
-        'Você não tem permissão para executar esta ação',
+        `Apenas usuários com perfil ${requiredRoles.join(' ou ')} podem acessar`,
       );
     }
+
     return true;
   }
 }

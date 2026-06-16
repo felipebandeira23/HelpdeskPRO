@@ -1,5 +1,5 @@
-import { IsString, IsOptional, MinLength, MaxLength } from 'class-validator';
-import { TicketPriority } from '@prisma/client';
+import { IsString, IsOptional, IsEnum, MinLength, MaxLength, IsISO8601 } from 'class-validator';
+import { TicketPriority, TicketStatus, TicketKind, TicketUrgency, TicketImpact } from '@prisma/client';
 
 // IDs são cuid() (não UUID) — @IsUUID rejeitava IDs válidos do banco.
 export class CreateTicketDto {
@@ -13,8 +13,32 @@ export class CreateTicketDto {
   description!: string;
 
   @IsOptional()
-  @IsString()
+  @IsEnum(TicketPriority)
   priority?: TicketPriority;
+
+  @IsOptional()
+  @IsEnum(TicketStatus)
+  status?: TicketStatus;
+
+  @IsOptional()
+  @IsEnum(TicketKind)
+  kind?: TicketKind;
+
+  @IsOptional()
+  @IsEnum(TicketUrgency)
+  urgency?: TicketUrgency;
+
+  @IsOptional()
+  @IsEnum(TicketImpact)
+  impact?: TicketImpact;
+
+  @IsOptional()
+  @IsString()
+  externalId?: string;
+
+  @IsOptional()
+  @IsISO8601()
+  openedAt?: string;
 
   @IsOptional()
   @IsString()
@@ -39,4 +63,8 @@ export class CreateTicketDto {
   @IsOptional()
   @IsString()
   customerId?: string;
+
+  @IsOptional()
+  @IsString()
+  locationId?: string;
 }

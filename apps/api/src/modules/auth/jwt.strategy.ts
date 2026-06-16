@@ -8,7 +8,7 @@ import { requireJwtSecret } from '../../common/config/jwt-secret';
 export interface JwtPayload {
   sub: string;
   email: string;
-  role: string;
+  profileId: string;
 }
 
 @Injectable()
@@ -21,9 +21,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<User | null> {
+  async validate(payload: JwtPayload): Promise<(User & { profile: { name: string } }) | null> {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
+      include: { profile: { select: { name: true } } },
     });
 
     if (!user || !user.active) {

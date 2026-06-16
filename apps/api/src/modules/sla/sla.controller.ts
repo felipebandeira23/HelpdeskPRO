@@ -12,11 +12,9 @@ import {
 import { SLAService, SlaView } from './sla.service';
 import { SlaConfigService, CreateSlaPolicyInput } from './sla-config.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
-import { Roles, RolesGuard } from '../../common/guards/roles.guard';
 import { SlaPolicy, BusinessHours, Holiday } from '@prisma/client';
 
 @Controller('api/slas')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class SLAController {
   constructor(
     private slaService: SLAService,
@@ -31,13 +29,11 @@ export class SLAController {
   }
 
   @Post('policies')
-  @Roles('ADMIN')
   createPolicy(@Body() input: CreateSlaPolicyInput): Promise<SlaPolicy> {
     return this.config.createPolicy(input);
   }
 
   @Patch('policies/:id')
-  @Roles('ADMIN')
   updatePolicy(
     @Param('id') id: string,
     @Body() input: Partial<CreateSlaPolicyInput>,
@@ -46,7 +42,6 @@ export class SLAController {
   }
 
   @Delete('policies/:id')
-  @Roles('ADMIN')
   deletePolicy(@Param('id') id: string): Promise<{ message: string }> {
     return this.config.deletePolicy(id);
   }
@@ -57,7 +52,6 @@ export class SLAController {
   }
 
   @Put('business-hours')
-  @Roles('ADMIN')
   setBusinessHours(
     @Body()
     body: {
@@ -73,7 +67,6 @@ export class SLAController {
   }
 
   @Post('holidays')
-  @Roles('ADMIN')
   createHoliday(
     @Body() input: { name: string; date: string; recurring?: boolean },
   ): Promise<Holiday> {
@@ -81,7 +74,6 @@ export class SLAController {
   }
 
   @Delete('holidays/:id')
-  @Roles('ADMIN')
   deleteHoliday(@Param('id') id: string): Promise<{ message: string }> {
     return this.config.deleteHoliday(id);
   }

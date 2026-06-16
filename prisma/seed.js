@@ -1,4 +1,4 @@
-const { PrismaClient, UserRole, TicketStatus, TicketPriority } = require('@prisma/client');
+const { PrismaClient, TicketStatus, TicketPriority, ProfileInterface } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
@@ -10,7 +10,41 @@ async function main() {
   const techHash = await bcrypt.hash('tech123', 12);
   const userHash = await bcrypt.hash('user123', 12);
 
-  // NOTE: Em produção, use bcrypt. Para desenvolvimento, senhas plaintext são OK.
+  // ─── Criar perfis padrão ───
+  const adminProfile = await prisma.profile.upsert({
+    where: { name: 'Administrador' },
+    update: {},
+    create: {
+      name: 'Administrador',
+      interface: ProfileInterface.CENTRAL,
+      isDefault: false,
+      comment: 'Perfil com acesso total ao sistema',
+    },
+  });
+
+  const techProfile = await prisma.profile.upsert({
+    where: { name: 'Técnico' },
+    update: {},
+    create: {
+      name: 'Técnico',
+      interface: ProfileInterface.CENTRAL,
+      isDefault: false,
+      comment: 'Perfil para técnicos de suporte',
+    },
+  });
+
+  const viewerProfile = await prisma.profile.upsert({
+    where: { name: 'Usuário Comum' },
+    update: {},
+    create: {
+      name: 'Usuário Comum',
+      interface: ProfileInterface.CENTRAL,
+      isDefault: true,
+      comment: 'Perfil para usuários finais',
+    },
+  });
+
+  // ─── Criar usuários vinculados aos perfis ───
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@helpdeskpro.local' },
     update: { password: adminHash },
@@ -18,7 +52,7 @@ async function main() {
       email: 'admin@helpdeskpro.local',
       name: 'Administrador',
       password: adminHash,
-      role: UserRole.ADMIN,
+      profileId: adminProfile.id,
       active: true,
     },
   });
@@ -30,7 +64,7 @@ async function main() {
       email: 'tecnico@helpdeskpro.local',
       name: 'Técnico de Suporte',
       password: techHash,
-      role: UserRole.TECHNICIAN,
+      profileId: techProfile.id,
       active: true,
     },
   });
@@ -42,7 +76,7 @@ async function main() {
       email: 'usuario@helpdeskpro.local',
       name: 'Usuário Comum',
       password: userHash,
-      role: UserRole.VIEWER,
+      profileId: viewerProfile.id,
       active: true,
     },
   });

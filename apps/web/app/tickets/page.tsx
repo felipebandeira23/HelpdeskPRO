@@ -28,6 +28,8 @@ interface RecurringTicket {
   active: boolean;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 export default function TicketsPage() {
   const [activeTab, setActiveTab] = useState<'tickets' | 'recurring'>('tickets');
 
@@ -37,6 +39,11 @@ export default function TicketsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filter, setFilter] = useState<'all' | 'open' | 'in-progress' | 'closed'>('all');
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [paginationInfo, setPaginationInfo] = useState<{
+    total: number;
+    hasMore: boolean;
+  }>({ total: 0, hasMore: false });
 
   // Recurring Tickets States
   const [recurring, setRecurring] = useState<RecurringTicket[]>([
@@ -55,21 +62,31 @@ export default function TicketsPage() {
   const [recActive, setRecActive] = useState(true);
 
   useEffect(() => {
-    loadTickets();
-    const handleTicketCreated = () => loadTickets();
+    setCurrentPage(0);
+    loadTickets(0);
+    const handleTicketCreated = () => {
+      setCurrentPage(0);
+      loadTickets(0);
+    };
     window.addEventListener('ticket-created', handleTicketCreated);
     return () => window.removeEventListener('ticket-created', handleTicketCreated);
   }, [filter]);
 
-  const loadTickets = async () => {
+  const loadTickets = async (page: number) => {
     setLoading(true);
     try {
       const status = filter === 'all' ? undefined : filter.toUpperCase();
       const params = new URLSearchParams();
       if (status) params.append('status', status);
+      params.append('skip', String(page * ITEMS_PER_PAGE));
+      params.append('take', String(ITEMS_PER_PAGE));
 
       const data = await api.get<any>(`/api/tickets?${params}`);
       setTickets(data.data || []);
+      setPaginationInfo({
+        total: data.pagination?.total || 0,
+        hasMore: data.pagination?.hasMore || false,
+      });
     } catch (error) {
       console.error('Erro ao carregar tickets:', error);
     } finally {
@@ -304,13 +321,21 @@ export default function TicketsPage() {
             </div>
           ) : (
             <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-4 min-h-[60vh]">
-              {['OPEN', 'IN_PROGRESS', 'CLOSED'].map(statusCol => {
+              {['OPEN', 'IN_PROGRESS', 'WAITING', 'PAUSED', 'RESOLVED', 'CLOSED'].map(statusCol => {
                 const colTickets = tickets.filter(t => t.status === statusCol);
+                const statusColors: Record<string, { border: string; label: string }> = {
+                  OPEN: { border: 'border-blue-500', label: 'Abertos' },
+                  IN_PROGRESS: { border: 'border-yellow-500', label: 'Em Andamento' },
+                  WAITING: { border: 'border-purple-500', label: 'Aguardando' },
+                  PAUSED: { border: 'border-orange-500', label: 'Pausados' },
+                  RESOLVED: { border: 'border-teal-500', label: 'Resolvidos' },
+                  CLOSED: { border: 'border-green-500', label: 'Fechados' },
+                };
                 return (
                   <div key={statusCol} className="flex-1 min-w-[260px] md:min-w-[320px] bg-slate-900/40 rounded-xl border border-slate-700/50 flex flex-col">
-                    <div className={`p-4 border-t-4 rounded-t-xl bg-slate-800/60 ${statusCol === 'OPEN' ? 'border-blue-500' : statusCol === 'IN_PROGRESS' ? 'border-yellow-500' : 'border-green-500'}`}>
+                    <div className={`p-4 border-t-4 rounded-t-xl bg-slate-800/60 ${statusColors[statusCol]?.border}`}>
                       <h3 className="text-white font-bold flex items-center gap-2">
-                        {statusCol === 'OPEN' ? 'Novos / Abertos' : statusCol === 'IN_PROGRESS' ? 'Em Andamento' : 'Concluídos'}
+                        {statusColors[statusCol]?.label}
                         <span className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">{colTickets.length}</span>
                       </h3>
                     </div>
@@ -356,6 +381,41 @@ export default function TicketsPage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {!loading && tickets.length > 0 && (
+            <div className="flex items-center justify-between mt-6 px-4 py-3 bg-slate-800/40 rounded-lg border border-slate-700/50">
+              <div className="text-sm text-slate-400">
+                Página <span className="font-bold text-white">{currentPage + 1}</span> de{' '}
+                <span className="font-bold text-white">{Math.ceil(paginationInfo.total / ITEMS_PER_PAGE)}</span> •{' '}
+                <span className="font-bold text-white">{paginationInfo.total}</span> tickets no total
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setCurrentPage(Math.max(0, currentPage - 1));
+                    loadTickets(Math.max(0, currentPage - 1));
+                  }}
+                  disabled={currentPage === 0}
+                  className="px-4 py-2 text-sm font-medium bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 rounded-lg transition-colors"
+                >
+                  ← Anterior
+                </button>
+                <button
+                  onClick={() => {
+                    if (paginationInfo.hasMore) {
+                      setCurrentPage(currentPage + 1);
+                      loadTickets(currentPage + 1);
+                    }
+                  }}
+                  disabled={!paginationInfo.hasMore}
+                  className="px-4 py-2 text-sm font-medium bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 rounded-lg transition-colors"
+                >
+                  Próxima →
+                </button>
+              </div>
             </div>
           )}
         </>

@@ -7,8 +7,9 @@ import { usePathname } from 'next/navigation';
 interface MenuItem {
   icon: string;
   label: string;
-  href: string;
+  href?: string;
   color: string;
+  children?: MenuItem[];
 }
 
 interface MenuSection {
@@ -30,7 +31,34 @@ const sections: MenuSection[] = [
   {
     title: 'Gestão',
     items: [
-      { icon: '💻', label: 'Ativos', href: '/assets', color: 'text-orange-500' },
+      {
+        icon: '💻',
+        label: 'Ativos',
+        color: 'text-orange-500',
+        children: [
+          { icon: '💻', label: 'Computadores', href: '/assets?type=COMPUTER', color: 'text-orange-500' },
+          { icon: '💻', label: 'Notebooks', href: '/assets?type=LAPTOP', color: 'text-orange-500' },
+          { icon: '🖥️', label: 'Servidores', href: '/assets?type=SERVER', color: 'text-orange-500' },
+          { icon: '🖥️', label: 'Monitores', href: '/assets?type=MONITOR', color: 'text-orange-500' },
+          { icon: '🖨️', label: 'Impressoras', href: '/assets?type=PRINTER', color: 'text-orange-500' },
+          { icon: '🔀', label: 'Switches', href: '/assets?type=SWITCH', color: 'text-orange-500' },
+          { icon: '📡', label: 'Roteadores', href: '/assets?type=ROUTER', color: 'text-orange-500' },
+          { icon: '📶', label: 'Pontos de Acesso', href: '/assets?type=ACCESS_POINT', color: 'text-orange-500' },
+          { icon: '🌐', label: 'Equipamentos de Rede', href: '/assets?type=NETWORK_EQUIPMENT', color: 'text-orange-500' },
+          { icon: '⌨️', label: 'Periféricos', href: '/assets?type=PERIPHERAL', color: 'text-orange-500' },
+          { icon: '☎️', label: 'Telefones', href: '/assets?type=PHONE', color: 'text-orange-500' },
+          { icon: '📱', label: 'Tablets', href: '/assets?type=TABLET', color: 'text-orange-500' },
+          { icon: '🎨', label: 'Cartuchos', href: '/assets?type=CARTRIDGE', color: 'text-orange-500' },
+          { icon: '📦', label: 'Insumos', href: '/assets?type=CONSUMABLE', color: 'text-orange-500' },
+          { icon: '🗄️', label: 'Racks', href: '/assets?type=RACK', color: 'text-orange-500' },
+          { icon: '📦', label: 'Chassis', href: '/assets?type=ENCLOSURE', color: 'text-orange-500' },
+          { icon: '🔌', label: 'PDUs', href: '/assets?type=PDU', color: 'text-orange-500' },
+          { icon: '🔗', label: 'Dispositivos Passivos', href: '/assets?type=PASSIVE_DEVICE', color: 'text-orange-500' },
+          { icon: '🔗', label: 'Cabos', href: '/assets?type=CABLE', color: 'text-orange-500' },
+          { icon: '🔍', label: 'Dispositivos não gerenciados', href: '/discovery', color: 'text-orange-500' },
+          { icon: '💻', label: 'Global', href: '/assets', color: 'text-orange-500' },
+        ],
+      },
       { icon: '🌐', label: 'Rede', href: '/network', color: 'text-teal-500' },
       { icon: '🔑', label: 'Licenças (SAM)', href: '/licenses', color: 'text-purple-400' },
       { icon: '🏢', label: 'Clientes', href: '/customers', color: 'text-amber-400' },
@@ -64,12 +92,76 @@ const sections: MenuSection[] = [
   },
 ];
 
+function MenuItemComponent({ item, isCollapsed, pathname }: { item: MenuItem; isCollapsed: boolean; pathname: string }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const hasChildren = item.children && item.children.length > 0;
+  const isActive = item.href ? (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))) : isExpanded;
+
+  return (
+    <div>
+      {hasChildren ? (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors group ${
+            isCollapsed ? 'justify-center' : ''
+          } ${
+            isExpanded
+              ? 'bg-slate-800 border-l-2 border-blue-500'
+              : 'hover:bg-slate-800'
+          }`}
+        >
+          <span className={`text-xl ${item.color}`}>{item.icon}</span>
+          {!isCollapsed && (
+            <>
+              <span className={`text-sm font-medium text-slate-300 group-hover:text-white flex-1 text-left`}>
+                {item.label}
+              </span>
+              <span className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                ▶
+              </span>
+            </>
+          )}
+        </button>
+      ) : (
+        <Link
+          href={item.href || '#'}
+          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors group ${
+            isCollapsed ? 'justify-center' : ''
+          } ${
+            isActive
+              ? 'bg-slate-800 border-l-2 border-blue-500'
+              : 'hover:bg-slate-800'
+          }`}
+        >
+          <span className={`text-xl ${item.color}`}>{item.icon}</span>
+          {!isCollapsed && (
+            <span
+              className={`text-sm font-medium ${
+                isActive
+                  ? 'text-white'
+                  : 'text-slate-300 group-hover:text-white'
+              }`}
+            >
+              {item.label}
+            </span>
+          )}
+        </Link>
+      )}
+
+      {hasChildren && isExpanded && !isCollapsed && (
+        <div className="space-y-1 mt-1 ml-2 border-l border-slate-700 pl-2">
+          {item.children!.map((child) => (
+            <MenuItemComponent key={child.href || child.label} item={child} isCollapsed={isCollapsed} pathname={pathname} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
-
-  const isActive = (href: string) =>
-    pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
 
   return (
     <aside
@@ -100,36 +192,9 @@ export function Sidebar() {
               </p>
             )}
             <div className="space-y-1">
-              {section.items.map((item) => {
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    title={item.label}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors group ${
-                      isCollapsed ? 'justify-center' : ''
-                    } ${
-                      active
-                        ? 'bg-slate-800 border-l-2 border-blue-500'
-                        : 'hover:bg-slate-800'
-                    }`}
-                  >
-                    <span className={`text-xl ${item.color}`}>{item.icon}</span>
-                    {!isCollapsed && (
-                      <span
-                        className={`text-sm font-medium ${
-                          active
-                            ? 'text-white'
-                            : 'text-slate-300 group-hover:text-white'
-                        }`}
-                      >
-                        {item.label}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
+              {section.items.map((item) => (
+                <MenuItemComponent key={item.label} item={item} isCollapsed={isCollapsed} pathname={pathname} />
+              ))}
             </div>
           </div>
         ))}

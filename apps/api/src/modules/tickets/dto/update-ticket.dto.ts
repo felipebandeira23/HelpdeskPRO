@@ -6,8 +6,9 @@ import {
   Min,
   Max,
   MaxLength,
+  IsISO8601,
 } from 'class-validator';
-import { TicketStatus, TicketPriority } from '@prisma/client';
+import { TicketStatus, TicketPriority, TicketKind, TicketUrgency, TicketImpact } from '@prisma/client';
 
 // IDs são cuid() (não UUID) — @IsUUID rejeitava IDs válidos do banco.
 export class UpdateTicketDto {
@@ -26,6 +27,26 @@ export class UpdateTicketDto {
   @IsOptional()
   @IsEnum(TicketPriority)
   priority?: TicketPriority;
+
+  @IsOptional()
+  @IsEnum(TicketKind)
+  kind?: TicketKind;
+
+  @IsOptional()
+  @IsEnum(TicketUrgency)
+  urgency?: TicketUrgency;
+
+  @IsOptional()
+  @IsEnum(TicketImpact)
+  impact?: TicketImpact;
+
+  @IsOptional()
+  @IsString()
+  externalId?: string;
+
+  @IsOptional()
+  @IsISO8601()
+  openedAt?: string;
 
   @IsOptional()
   @IsInt()
@@ -52,6 +73,10 @@ export class UpdateTicketDto {
   @IsOptional()
   @IsString()
   customerId?: string;
+
+  @IsOptional()
+  @IsString()
+  locationId?: string;
 
   /** Obrigatório quando status muda para PAUSED */
   @IsOptional()

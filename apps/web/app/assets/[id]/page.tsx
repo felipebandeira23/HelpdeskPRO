@@ -49,9 +49,24 @@ type Section =
   | 'telemetry';
 
 const ASSET_TYPE_ICON: Record<string, string> = {
-  COMPUTER: '🖥️', LAPTOP: '💻', SERVER: '🗄️', PRINTER: '🖨️',
-  SWITCH: '🔀', ROUTER: '📡', PHONE: '📱', TABLET: '📟',
+  COMPUTER: '💻', LAPTOP: '📱', SERVER: '🗄️', PRINTER: '🖨️',
+  SWITCH: '🔀', ROUTER: '📡', PHONE: '☎️', TABLET: '📟',
   MONITOR: '🖥️', OTHER: '🔌',
+};
+
+const ASSET_TYPE_LABEL: Record<string, string> = {
+  COMPUTER: 'Computador', LAPTOP: 'Notebook', SERVER: 'Servidor', PRINTER: 'Impressora',
+  SWITCH: 'Switch', ROUTER: 'Roteador', PHONE: 'Telefone', TABLET: 'Tablet',
+  MONITOR: 'Monitor', OTHER: 'Outro',
+};
+
+const ASSET_STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+  IN_USE: { label: '✓ Em uso', cls: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+  AVAILABLE: { label: '◉ Disponível', cls: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
+  MAINTENANCE: { label: '⚙️ Manutenção', cls: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' },
+  RETIRED: { label: '✕ Aposentado', cls: 'bg-slate-500/15 text-slate-400 border-slate-500/30' },
+  STOLEN: { label: '⚠️ Roubado', cls: 'bg-red-500/15 text-red-400 border-red-500/30' },
+  LENT: { label: '→ Emprestado', cls: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
 };
 
 const AGENT_DOT: Record<string, string> = {
@@ -137,23 +152,39 @@ export default function AssetDetailPage() {
         <Link href="/assets" className="text-blue-400 hover:text-blue-300 text-xs mb-3 inline-flex items-center gap-1">
           ← Inventário
         </Link>
-        <div className="flex items-center gap-3 mt-1">
-          <span className="text-2xl">{typeIcon}</span>
-          <div>
-            <h1 className="text-2xl font-bold text-white">{asset.hostname}</h1>
-            <div className="flex items-center gap-3 mt-0.5">
-              <span className="text-slate-400 text-sm">Detalhe do ativo</span>
-              {asset.inventoryNumber && (
-                <span className="text-slate-500 text-xs font-mono bg-slate-800 px-2 py-0.5 rounded">
-                  {asset.inventoryNumber}
+        <div className="flex items-center justify-between mt-1">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{typeIcon}</span>
+            <div>
+              <h1 className="text-2xl font-bold text-white">{asset.hostname}</h1>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded">
+                  {ASSET_TYPE_LABEL[asset.assetType] || asset.assetType}
                 </span>
-              )}
-              <div className="flex items-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${agentDot}`} />
-                <span className="text-xs text-slate-400">
-                  {asset.agentStatus === 'ONLINE' ? 'Online' : asset.agentStatus === 'OFFLINE' ? 'Offline' : 'Sem agente'}
-                </span>
+                {asset.serialNumber && (
+                  <span className="text-xs text-slate-500 font-mono">SN: {asset.serialNumber}</span>
+                )}
+                {asset.inventoryNumber && (
+                  <span className="text-xs text-slate-500 font-mono">INV: {asset.inventoryNumber}</span>
+                )}
               </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Status badge */}
+            <span
+              className={`inline-flex text-xs px-3 py-1.5 rounded border ${
+                ASSET_STATUS_BADGE[asset.assetStatus]?.cls || 'bg-slate-500/15 text-slate-400 border-slate-500/30'
+              }`}
+            >
+              {ASSET_STATUS_BADGE[asset.assetStatus]?.label || asset.assetStatus}
+            </span>
+            {/* Agent status */}
+            <div className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded border border-slate-700">
+              <span className={`w-1.5 h-1.5 rounded-full ${agentDot}`} />
+              <span className="text-xs text-slate-400">
+                {asset.agentStatus === 'ONLINE' ? 'Online' : asset.agentStatus === 'OFFLINE' ? 'Offline' : 'Sem agente'}
+              </span>
             </div>
           </div>
         </div>

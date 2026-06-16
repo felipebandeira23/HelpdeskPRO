@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { UserRole, User } from '@prisma/client';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class LdapService {
@@ -20,6 +20,15 @@ export class LdapService {
       }
 
       // Sync or create user from LDAP
+      // Find default technician profile
+      const techProfile = await this.prisma.profile.findFirst({
+        where: { name: 'Técnico' },
+      });
+
+      if (!techProfile) {
+        throw new Error('Technician profile not found');
+      }
+
       const user = await this.prisma.user.upsert({
         where: { email },
         update: { updatedAt: new Date() },
@@ -27,7 +36,7 @@ export class LdapService {
           email,
           name: email.split('@')[0],
           password: '', // LDAP auth doesn't store password
-          role: UserRole.TECHNICIAN,
+          profileId: techProfile.id,
           active: true,
         },
       });
@@ -44,21 +53,33 @@ export class LdapService {
     // Sync all LDAP users to database
     try {
       await Promise.resolve(ldapQuery); // satisfy require-await or use the param
+
+      const adminProfile = await this.prisma.profile.findFirst({
+        where: { name: 'Administrador' },
+      });
+      const techProfile = await this.prisma.profile.findFirst({
+        where: { name: 'Técnico' },
+      });
+
+      if (!adminProfile || !techProfile) {
+        throw new Error('Required profiles not found');
+      }
+
       const baseUsers = [
-        { email: 'admin@company.com', name: 'Admin User', role: UserRole.ADMIN },
-        { email: 'support@company.com', name: 'Support Team', role: UserRole.TECHNICIAN },
+        { email: 'admin@company.com', name: 'Admin User', profileId: adminProfile.id },
+        { email: 'support@company.com', name: 'Support Team', profileId: techProfile.id },
       ];
 
       const syncedUsers = await Promise.all(
         baseUsers.map((u) =>
           this.prisma.user.upsert({
             where: { email: u.email },
-            update: { role: u.role },
+            update: {},
             create: {
               email: u.email,
               name: u.name,
               password: '',
-              role: u.role,
+              profileId: u.profileId,
               active: true,
             },
           }),

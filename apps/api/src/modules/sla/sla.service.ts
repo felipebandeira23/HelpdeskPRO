@@ -1,8 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  OnModuleInit,
-  OnModuleDestroy,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -10,7 +8,6 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { SLA, SLAStatus, TicketPriority, SlaPolicy } from '@prisma/client';
 import { addBusinessMinutes } from './business-hours.util';
 
-const EVALUATION_INTERVAL_MS = 60_000;
 const WARNING_THRESHOLD = 0.25; // avisa quando resta <25% da janela
 
 export interface SlaView extends SLA {
@@ -19,27 +16,13 @@ export interface SlaView extends SLA {
 }
 
 @Injectable()
-export class SLAService implements OnModuleInit, OnModuleDestroy {
+export class SLAService {
   private readonly logger = new Logger(SLAService.name);
-  private timer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
   ) {}
-
-  // setInterval em vez de @nestjs/schedule para não adicionar dependência nova (PLANO.md §5)
-  onModuleInit(): void {
-    this.timer = setInterval(() => {
-      this.evaluateAll().catch((err) =>
-        this.logger.error(`Avaliação de SLA falhou: ${err}`),
-      );
-    }, EVALUATION_INTERVAL_MS);
-  }
-
-  onModuleDestroy(): void {
-    if (this.timer) clearInterval(this.timer);
-  }
 
   // ─── Aplicação de política ────────────────────────────────────────────────
 

@@ -27,7 +27,7 @@ import { JwtAuthGuard } from '../auth/jwt.guard';
 import { Attachment } from '@prisma/client';
 
 interface AuthRequest {
-  user: { id: string; role?: string };
+  user: { id: string; profileId?: string };
 }
 
 @Controller('api/attachments')
@@ -92,6 +92,6 @@ export class AttachmentsController {
     @Param('id') id: string,
     @Request() req: AuthRequest,
   ): Promise<{ message: string }> {
-    return this.service.delete(id, req.user.id, req.user.role === 'ADMIN');
+    return this.service.delete(id, req.user.id, !!req.user.profileId);
   }
 }

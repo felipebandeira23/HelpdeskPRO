@@ -49,7 +49,8 @@
       "mcp__432508c1-a6f6-4106-ab1a-12aa771a1d24__notion-fetch",
       "Bash(git rm *)",
       "Skill(run)",
-      "PowerShell(npm run *)"
+      "PowerShell(npm run *)",
+      "Bash(Start-Sleep -Seconds 5)"
     ]
   }
 }

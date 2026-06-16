@@ -5,13 +5,12 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { UserRole } from '@prisma/client';
 
 const safeSelect = {
   id: true,
   email: true,
   name: true,
-  role: true,
+  profileId: true,
   active: true,
   createdAt: true,
   updatedAt: true,
@@ -25,7 +24,7 @@ export class UsersService {
     email: string;
     name: string;
     password: string;
-    role?: UserRole;
+    profileId?: string;
     active?: boolean;
   }) {
     const existing = await this.prisma.user.findUnique({
@@ -36,12 +35,21 @@ export class UsersService {
     }
 
     const password = await bcrypt.hash(data.password, 12);
+
+    let profileId = data.profileId;
+    if (!profileId) {
+      const viewerProfile = await this.prisma.profile.findFirst({
+        where: { name: 'Visualizador' },
+      });
+      profileId = viewerProfile?.id || '';
+    }
+
     return this.prisma.user.create({
       data: {
         email: data.email,
         name: data.name,
         password,
-        role: data.role ?? UserRole.VIEWER,
+        profileId,
         active: data.active ?? true,
       },
       select: safeSelect,
@@ -70,7 +78,7 @@ export class UsersService {
       name?: string;
       email?: string;
       password?: string;
-      role?: UserRole;
+      profileId?: string;
       active?: boolean;
     },
   ) {
@@ -83,7 +91,7 @@ export class UsersService {
       data: {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.email !== undefined && { email: data.email }),
-        ...(data.role !== undefined && { role: data.role }),
+        ...(data.profileId !== undefined && { profileId: data.profileId }),
         ...(data.active !== undefined && { active: data.active }),
         ...(hashedPassword !== undefined && { password: hashedPassword }),
       },

@@ -6,11 +6,14 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtGuard } from '../../common/guards/jwt.guard';
 import { AssetsService } from './assets.service';
 import { Prisma } from '@prisma/client';
+import { isTelemetryCapable } from '../../common/constants/asset.constants';
 
 @Controller('api/assets')
 @UseGuards(JwtGuard)
@@ -25,8 +28,8 @@ export class AssetsController {
   }
 
   @Get()
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query('type') type?: string) {
+    return this.service.findAll(type);
   }
 
   @Get(':id')
@@ -139,7 +142,11 @@ export class AssetsController {
   // ── Telemetria ────────────────────────────────────────────────
 
   @Post(':id/telemetry')
-  addTelemetry(@Param('id') id: string, @Body() data: any) {
+  async addTelemetry(@Param('id') id: string, @Body() data: any) {
+    const asset = await this.service.findOne(id);
+    if (!isTelemetryCapable(asset.assetType)) {
+      throw new BadRequestException(`O tipo de ativo ${asset.assetType} não suporta telemetria`);
+    }
     return this.service.addTelemetry(id, data);
   }
 
@@ -151,5 +158,22 @@ export class AssetsController {
   @Get(':id/telemetry/latest')
   getLatestTelemetry(@Param('id') id: string) {
     return this.service.getLatestTelemetry(id);
+  }
+
+  // ── Conexões ──────────────────────────────────────────────────
+
+  @Get(':id/connections')
+  getConnections(@Param('id') id: string) {
+    return this.service.getConnections(id);
+  }
+
+  @Post(':id/connections')
+  addConnection(@Param('id') id: string, @Body() data: { childId: string; kind?: string }) {
+    return this.service.addConnection(id, data.childId, data.kind);
+  }
+
+  @Delete(':id/connections/:connId')
+  removeConnection(@Param('connId') connId: string) {
+    return this.service.removeConnection(connId);
   }
 }

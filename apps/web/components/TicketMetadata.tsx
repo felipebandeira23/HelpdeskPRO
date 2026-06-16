@@ -65,7 +65,7 @@ const SLA_LABEL: Record<string, string> = {
   BREACHED: 'Estourado',
 };
 
-const statusOptions = ['OPEN', 'IN_PROGRESS', 'WAITING', 'PAUSED', 'CLOSED'];
+const statusOptions = ['OPEN', 'IN_PROGRESS', 'WAITING', 'PAUSED', 'RESOLVED', 'CLOSED'];
 const priorityOptions = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
 export default function TicketMetadata({
@@ -88,6 +88,9 @@ export default function TicketMetadata({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSavedFeedback, setShowSavedFeedback] = useState(false);
   const [categories, setCategories] = useState<{ id: string; path?: string; name: string }[]>([]);
+  const [editingAssignedTo, setEditingAssignedTo] = useState(false);
+  const [assignableUsers, setAssignableUsers] = useState<Array<{ id: string; name: string }>>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   useEffect(() => {
     api
@@ -112,6 +115,27 @@ export default function TicketMetadata({
       await onFollowersChange?.();
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const loadAssignableUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const users = await api.get<Array<{ id: string; name: string }>>('/api/users');
+      const filtered = Array.isArray(users) ? users : [];
+      setAssignableUsers(filtered);
+    } catch (err) {
+      console.error('Erro ao carregar usuários:', err);
+      setAssignableUsers([]);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const handleOpenAssignSelect = async () => {
+    setEditingAssignedTo(true);
+    if (assignableUsers.length === 0) {
+      await loadAssignableUsers();
     }
   };
 
@@ -547,9 +571,34 @@ export default function TicketMetadata({
             <label className="block text-xs font-medium text-slate-400 uppercase mb-2">
               Atribuído a
             </label>
-            <button className="w-full text-left px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 border border-dashed border-slate-700 hover:border-slate-600 transition-colors text-sm">
-              + Atribuir a
-            </button>
+            {editingAssignedTo ? (
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleUpdate('assignedToId', e.target.value);
+                    setEditingAssignedTo(false);
+                  }
+                }}
+                disabled={updating || loadingUsers}
+                autoFocus
+                className="w-full bg-slate-800 border border-blue-500 rounded-lg px-3 py-2 text-slate-100 cursor-pointer"
+              >
+                <option value="">Selecione um usuário...</option>
+                {assignableUsers.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <button
+                onClick={handleOpenAssignSelect}
+                disabled={updating}
+                className="w-full text-left px-3 py-2 rounded-lg text-slate-400 hover:text-slate-200 border border-dashed border-slate-700 hover:border-slate-600 transition-colors text-sm"
+              >
+                + Atribuir a
+              </button>
+            )}
           </div>
         )}
 
@@ -696,7 +745,7 @@ export default function TicketMetadata({
             <p className="text-slate-400 text-sm mb-6">
               Tem certeza que deseja excluir o ticket <strong>#{ticket.id}</strong>? Esta ação não pode ser desfeita.
             </p>
-            
+
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
@@ -715,6 +764,7 @@ export default function TicketMetadata({
           </div>
         </div>
       )}
+
     </div>
   );
 }

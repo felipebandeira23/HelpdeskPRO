@@ -18,7 +18,7 @@ export class AuthController {
   async login(
     @Body() dto: LoginDto,
     @Request() req: ExpressRequest,
-  ): Promise<{ access_token: string; user: { id: string; email: string; name: string; role: string } }> {
+  ): Promise<{ access_token: string; user: { id: string; email: string; name: string; profileId: string } }> {
     const ip = req.ip || 'unknown';
     try {
       const result = await this.authService.login(dto);
@@ -38,13 +38,13 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('me')
-  getProfile(@Request() req: ExpressRequest): { id: string; email: string; name: string; role: string } {
-    const user = req.user as { id: string; email: string; name: string; role: string };
+  getProfile(@Request() req: ExpressRequest): { id: string; email: string; name: string; profileId: string } {
+    const user = req.user as { id: string; email: string; name: string; profileId: string };
     return {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role,
+      profileId: user.profileId,
     };
   }
 }
